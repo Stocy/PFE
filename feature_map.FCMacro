@@ -1,0 +1,14 @@
+
+for i in range(n_pts):
+	type = [dst[2][0][3] for dst in dsts][i]
+	if (type != 'Face'):
+		index = [dst[2][0][4] for dst in dsts][i]
+		faces = []
+		if (type == 'Edge'):
+			edge = cube.Edges[index]
+			faces = cube.ancestorsOfType(edge,Part.Face)
+		if (type == 'Vertex'):
+			vertex = cube.Vertexes[index]
+			faces = cube.ancestorsOfType(vertex,Part.Face)
+
+		print(len(faces))

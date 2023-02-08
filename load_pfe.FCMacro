@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+
+# Macro Begin: /home/tom/.var/app/org.freecadweb.FreeCAD/data/FreeCAD/Macro/load_pfe.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
+# exec macro ctrl f6
+import FreeCAD
+import Points
+import ImportGui
+import Part
+import os
+from pathlib import Path
+
+docName = "test"
+try :
+	App.closeDocument(docName)
+except Exception:
+	pass
+
+
+App.newDocument(docName)
+doc = App.getDocument(docName)
+
+git_dirpath = "/home/tom/Documents/cours/pfe/project/PFE"
+print (git_dirpath)
+Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'),docName)
+ImportGui.insert(os.path.join(git_dirpath,'step_files/test_cube.step'),docName)
+
+pts = doc.getObject("nuage_pts_test_cube").Points.Points
+cube = doc.getObject("Part__Feature").Shape
+
+# distances
+dsts = []
+n_pts = len(pts)
+
+for i in range(n_pts):
+	pt = Part.Vertex(pts[i])
+	dst = pt.distToShape(cube)
+	dsts.append(dst)
+#	print (dst[0])
+avg = sum([dst[0] for dst in dsts]) / len(dsts)
+print("average distance : ",avg)
+
+out_pts = Points.Points()
+on_pts = Points.Points()
+
+on = []
+out = []
+for i in range(n_pts):
+	if ([dst[2][0][3] for dst in dsts][i] == 'Face'):
+		if ([dst[0] for dst in dsts][i] > avg):
+			out.append(pts[i])
+		else :
+			on.append(pts[i])
+
+# vec 0 [dst[1][0][1] for dst in dsts]
+# vec 1 [dst[1][0][1] for dst in dsts]
+out_pts.addPoints(out)
+on_pts.addPoints(on)
+
+out = doc.addObject("Points::Feature","out")
+on = doc.addObject("Points::Feature","on")
+
+out.Points = out_pts
+on.Points = on_pts
+
+# ptts = doc.addObject("Points::Feature","ptss")
+#pts.ViewObject.ShapeColor = (1.0,1.0,1.0)
+### End command Std_Import
+# Macro End: /home/tom/.var/app/org.freecadweb.FreeCAD/data/FreeCAD/Macro/load_pfe.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
