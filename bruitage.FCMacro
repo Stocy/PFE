@@ -2,7 +2,7 @@ import random
 import Points
 import numpy as np
 
-doc = App.getDocument("TestNuages")
+doc = FreeCAD.activeDocument()
 obj = doc.getObject("Points")
 shp = obj.Points
 
