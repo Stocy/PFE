@@ -1,0 +1,25 @@
+import random
+import Points
+import numpy as np
+
+doc = App.getDocument("TestNuages")
+obj = doc.getObject("Points")
+shp = obj.Points
+
+print(shp.Points[0])
+
+tmp = [0 for x in range(shp.CountPoints)]
+
+for i in range(shp.CountPoints):
+	rand = np.array([random.random(), random.random(), random.random()]) * np.sign(obj.Normal[i]) * 2
+	displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
+	tmp[i] = shp.Points[i] + displacementVector
+
+noise = Points.Points()
+noise.addPoints(shp.Points)
+noise.addPoints(tmp)
+
+noiseObj = doc.addObject("Points::Feature", "noisyObj")
+noiseObj.Points = noise
+
+print(tmp[0])
