@@ -203,6 +203,7 @@ def bruitage():
 	noiseObj = doc.addObject("Points::Feature", "noisyObj")
 	noiseObj.Points = noise
 
+
 def feature_matching_dst():
 	selection = Gui.Selection.getSelection()
 	if len(selection) == 2:
