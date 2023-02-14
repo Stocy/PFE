@@ -8,6 +8,8 @@ import ImportGui
 import Part
 import os
 import time
+import numpy as np
+import random
 from pathlib import Path
 
 
@@ -41,10 +43,10 @@ def compute_distances():
 			cloud = selection[1]
 			object = selection[0]
 		else:
-			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
+			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
 			return
 	else:
-		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
+		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
 		return
 	shape = object.Shape
 	pts = cloud.Points.Points
@@ -73,10 +75,10 @@ def distance_map():
 			cloud = selection[1]
 			object = selection[0]
 		else:
-			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
+			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
 			return
 	else:
-		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
+		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
 		return
 	shape = object.Shape
 	pts = cloud.Points.Points
@@ -136,10 +138,10 @@ def feature_matching_bb():
 			cloud = selection[1]
 			object = selection[0]
 		else:
-			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
+			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
 			return
 	else:
-		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
+		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
 		return
 
 	shape = object.Shape
@@ -173,6 +175,33 @@ def feature_matching_bb():
 		matches.addObject(fm_pts)
 		fm_pts.Points = feature_pts
 	return faceIdx_pts_dict
+
+def bruitage():
+	selection = Gui.Selection.getSelection()
+	if len(selection) == 1:
+		if type(selection[0]) is App.GeoFeature:
+			cloud = selection[0]
+		else:
+			print("WRONG ARGUMENT should be App.GeoFeature")
+			return
+	else:
+		print("TOO MANY ARGUMENTS should be App.GeoFeature")
+		return
+
+	shp = cloud.Points
+
+	tmp = [0 for x in range(shp.CountPoints)]
+	for i in range(shp.CountPoints):
+		rand = np.array([random.random(), random.random(), random.random()]) * np.sign(cloud.Normal[i]) * 2
+		displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
+		tmp[i] = shp.Points[i] + displacementVector
+	noise = Points.Points()
+	noise.addPoints(shp.Points)
+	noise.addPoints(tmp)
+
+	doc = App.ActiveDocument
+	noiseObj = doc.addObject("Points::Feature", "noisyObj")
+	noiseObj.Points = noise
 
 def feature_matching_dst():
 	selection = Gui.Selection.getSelection()
