@@ -174,7 +174,58 @@ def feature_matching_bb():
 		fm_pts.Points = feature_pts
 	return faceIdx_pts_dict
 
+def feature_matching_dst():
+	selection = Gui.Selection.getSelection()
+	if len(selection) == 2:
+		if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
+			cloud = selection[0]
+			object = selection[1]
+		elif type(selection[1]) is App.GeoFeature and type(selection[0]) is Part.Feature:
+			cloud = selection[1]
+			object = selection[0]
+		else:
+			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
+			return
+	else:
+		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
+		return
 
+	shape = object.Shape
+	pts = cloud.Points.Points
+
+	pt_dst = [float("inf") for p in range(len(pts))]
+	pt_face = [Part.Face() for p in range(len(pts))]
+	faceIdx_pts_dict = {}
+
+	for face_index in range(len(shape.Faces)):
+		for pt_index in range(len(pts)):
+			face = shape.Faces[face_index]
+			pt = Part.Vertex(pts[pt_index])
+			dst = pt.distToShape(face)
+			if dst[0] < pt_dst[pt_index]:
+				pt_face[pt_index] = face_index
+				pt_dst[pt_index] = dst[0]
+
+	for pt_index in range(len(pts)):
+		face_index = pt_face[pt_index]
+		if face_index in faceIdx_pts_dict:
+			faceIdx_pts_dict[face_index].append(pts[pt_index])
+		else:
+			faceIdx_pts_dict[face_index] = [pts[pt_index]]
+
+	doc = App.ActiveDocument
+	matches = doc.addObject('App::Part', 'features_matches')
+	for face_index, f_pts in faceIdx_pts_dict.items():
+		feature_pts = Points.Points()
+		feature_pts.addPoints(f_pts)
+		fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
+		fm_pts.adjustRelativeLinks(matches)
+		matches.addObject(fm_pts)
+		fm_pts.Points = feature_pts
+	return faceIdx_pts_dict
+	# doc.addObject("Part::Compound","as")
+	# ttt = Part.makeCompound(sub)
+	# obj.Shape = ttt
 # distances
 
 '''
