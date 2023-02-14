@@ -203,6 +203,32 @@ def bruitage():
 	noiseObj = doc.addObject("Points::Feature", "noisyObj")
 	noiseObj.Points = noise
 
+def bruit_gaussien():
+	selection = Gui.Selection.getSelection()
+	if len(selection) == 1:
+		if type(selection[0]) is App.GeoFeature:
+			cloud = selection[0]
+		else:
+			print("WRONG ARGUMENT should be App.GeoFeature")
+			return
+	else:
+		print("TOO MANY ARGUMENTS should be App.GeoFeature")
+		return
+
+	shp = cloud.Points
+	gaussNoise = np.random.randn(shp.CountPoints, 3)
+	tmp = [0 for x in range(shp.CountPoints)]
+	for i in range(shp.CountPoints):
+		tmp[i] = shp.Points[i] + FreeCAD.Vector(gaussNoise[i][0], gaussNoise[i][1], gaussNoise[i][2])
+	noise = Points.Points()
+	noise.addPoints(shp.Points)
+	noise.addPoints(tmp)
+
+	doc = App.ActiveDocument
+	noiseObj = doc.addObject("Points::Feature", "noisyObj")
+	noiseObj.Points = noise
+	
+
 
 # distances
 
