@@ -32,8 +32,7 @@ def load_example():
 	pts = doc.getObject("nuage_pts_test_cube").Points.Points
 	cube = doc.getObject("Part__Feature").Shape
 
-
-def compute_distances():
+def select_part_cloud():
 	selection = Gui.Selection.getSelection()
 	if len(selection) == 2:
 		if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
@@ -44,12 +43,35 @@ def compute_distances():
 			object = selection[0]
 		else:
 			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
-			return
+			return None,None
 	else:
 		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
-		return
+		return None,None
 	shape = object.Shape
 	pts = cloud.Points.Points
+	return shape, pts
+
+def select_part_mesh():
+	selection = Gui.Selection.getSelection()
+	if len(selection) == 2:
+		if type(selection[0]) is Part.Feature and selection[1].TypeId == 'Mesh::Feature':
+			part_obj = selection[0]
+			object = selection[1]
+		elif type(selection[1]) is Part.Feature and selection[0].TypeId == 'Mesh::Feature':
+			part_obj = selection[1]
+			object = selection[0]
+		else:
+			print("WRONG ARGUMENTS should be Mesh.Feature and Part.Feature")
+			return None,None
+	else:
+		print("TOO FEW ARGUMENTS should be Mesh.Feature and Part.Feature")
+		return None,None
+	mesh = object.Mesh
+	part = part_obj.Shape
+	return mesh, part
+def compute_distances():
+	shape, pts = select_part_cloud()
+	if shape == None : return None
 	dsts = []
 	n_pts = len(pts)
 
@@ -66,22 +88,8 @@ def compute_distances():
 
 
 def distance_map():
-	selection = Gui.Selection.getSelection()
-	if len(selection) == 2:
-		if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
-			cloud = selection[0]
-			object = selection[1]
-		elif type(selection[1]) is App.GeoFeature and type(selection[0]) is Part.Feature:
-			cloud = selection[1]
-			object = selection[0]
-		else:
-			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
-			return
-	else:
-		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
-		return
-	shape = object.Shape
-	pts = cloud.Points.Points
+	shape, pts = select_part_cloud()
+	if shape == None: return None
 
 	dsts = compute_distances()
 	avg = sum([dst[0] for dst in dsts]) / len(dsts)
@@ -129,23 +137,8 @@ def distance_map():
 	far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 
 def feature_matching_bb():
-	selection = Gui.Selection.getSelection()
-	if len(selection) == 2:
-		if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
-			cloud = selection[0]
-			object = selection[1]
-		elif type(selection[1]) is App.GeoFeature and type(selection[0]) is Part.Feature:
-			cloud = selection[1]
-			object = selection[0]
-		else:
-			print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
-			return
-	else:
-		print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
-		return
-
-	shape = object.Shape
-	pts = cloud.Points.Points
+	shape, pts = select_part_cloud()
+	if shape == None: return None
 
 	pt_matched = [False for p in range(len(pts))]
 	faceIdx_pts_dict = {}
@@ -205,20 +198,8 @@ def bruitage():
 
 
 def feature_matching_dst():
-	selection = Gui.Selection.getSelection()
-	if len(selection) == 2:
-		if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
-			cloud = selection[0]
-			object = selection[1]
-		elif type(selection[1]) is App.GeoFeature and type(selection[0]) is Part.Feature:
-			cloud = selection[1]
-			object = selection[0]
-		else:
-			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
-			return
-	else:
-		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
-		return
+	shape, pts = select_part_cloud()
+	if shape is None: return None
 
 	shape = object.Shape
 	pts = cloud.Points.Points
@@ -253,10 +234,20 @@ def feature_matching_dst():
 		matches.addObject(fm_pts)
 		fm_pts.Points = feature_pts
 	return faceIdx_pts_dict
+	# isoler face dans un compound
 	# doc.addObject("Part::Compound","as")
 	# ttt = Part.makeCompound(sub)
 	# obj.Shape = ttt
-# distances
+	# distances
+def fit_mesh_to_part():
+	mesh, part = select_part_mesh()
+	if mesh is None: return
+	n_pts = len(mesh.Points)
+	for pt_index in range(n_pts):
+		pt = mesh.Points[pt_index]
+		part_vertex = Part.Vertex(pt.Vector)
+		d = part_vertex.distToShape(part)
+		pt.move(d[1][0][1] - d[1][0][0])
 
 '''
 dsts = []
