@@ -7,6 +7,7 @@ import Points
 import ImportGui
 import Part
 import os
+import time
 from pathlib import Path
 
 
@@ -41,19 +42,24 @@ def compute_distances():
 			object = selection[0]
 		else:
 			print("WRONG AGUMENTS shoud be App.GeoFeature and Part.Feature")
-			return;
+			return
 	else:
 		print("TOO FEW AGUMENTS shoud be App.GeoFeature and Part.Feature")
-		return;
+		return
 	shape = object.Shape
 	pts = cloud.Points.Points
 	dsts = []
 	n_pts = len(pts)
 
+	start = time.time()
+
 	for i in range(n_pts):
 		pt = Part.Vertex(pts[i])
 		dst = pt.distToShape(shape)
 		dsts.append(dst)
+
+	end = time.time()
+	print(" comp : " + str(n_pts) + " , " + str(end-start))
 	return dsts
 
 
@@ -84,7 +90,6 @@ def distance_map():
 	medium = []
 	far = []
 	for i in range(n_pts):
-		if ([dst[2][0][3] for dst in dsts][i] == 'Face'):
 			d = [dst[0] for dst in dsts][i]
 			if d > avg * 2:
 				far.append(pts[i])
@@ -116,9 +121,9 @@ def distance_map():
 	far = doc.addObject("Points::Feature", "far")
 	far.Points = far_pts
 
-	on.ViewObject.ShapeColor = (1.0,1.0,1.0)
-	close.ViewObject.ShapeColor = (1.0,0.75,0.75)
-	medium.ViewObject.ShapeColor = (1.0, 0.35, 0.35)
+	on.ViewObject.ShapeColor = (0.0,1.0,0.0)
+	close.ViewObject.ShapeColor = (0.0,0.0,1.00)
+	medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
 	far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 
 def feature_matching_bb():
