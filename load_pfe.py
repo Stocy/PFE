@@ -23,6 +23,7 @@ def load_example():
 	App.newDocument(docName)
 	doc = App.getDocument(docName)
 
+	git_dirpath = "/home/tom/Documents/cours/pfe/project/PFE"
 	print(git_dirpath)
 
 	Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'), docName)
