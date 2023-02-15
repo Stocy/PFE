@@ -71,7 +71,7 @@ class pfe:
 		return mesh, part
 
 	def compute_distances():
-		shape, pts = select_part_cloud()
+		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 		dsts = []
 		n_pts = len(pts)
@@ -88,7 +88,7 @@ class pfe:
 		return dsts
 
 	def distance_map():
-		shape, pts = select_part_cloud()
+		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 
 		dsts = compute_distances()
@@ -137,7 +137,8 @@ class pfe:
 		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 
 	def feature_matching_bb():
-		shape, pts = select_part_cloud()
+
+		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 
 		pt_matched = [False for p in range(len(pts))]
@@ -222,11 +223,8 @@ class pfe:
 		noiseObj.Points = noise
 
 	def feature_matching_dst():
-		shape, pts = select_part_cloud()
+		shape, pts = pfe.select_part_cloud()
 		if shape is None: return None
-
-		shape = object.Shape
-		pts = cloud.Points.Points
 
 		pt_dst = [float("inf") for p in range(len(pts))]
 		pt_face = [Part.Face() for p in range(len(pts))]
@@ -265,7 +263,7 @@ class pfe:
 	# obj.Shape = ttt
 	# distances
 	def fit_mesh_to_part():
-		mesh, part = select_part_mesh()
+		mesh, part = pfe.select_part_mesh()
 		if mesh is None: return
 		n_pts = len(mesh.Points)
 		for pt_index in range(n_pts):
