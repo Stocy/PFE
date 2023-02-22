@@ -10,6 +10,8 @@ import os
 import time
 import numpy as np
 import random
+from scipy.spatial import distance
+from collections import Counter
 from pathlib import Path
 
 class pfe:
@@ -23,7 +25,7 @@ class pfe:
 		App.newDocument(docName)
 		doc = App.getDocument(docName)
 
-		git_dirpath = "/home/tom/Documents/cours/pfe/project/PFE"
+		git_dirpath = "C:/Users/benja/Documents/GitHub/PFE"
 		print(git_dirpath)
 
 		Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'), docName)
@@ -91,7 +93,7 @@ class pfe:
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 
-		dsts = compute_distances()
+		dsts = pfe.compute_distances()
 		avg = sum([dst[0] for dst in dsts]) / len(dsts)
 		n_pts = len(dsts)
 
@@ -135,6 +137,76 @@ class pfe:
 		close.ViewObject.ShapeColor = (0.0, 0.0, 1.00)
 		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
 		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
+
+	def distance_map_knn(k=3):
+		shape, pts = pfe.select_part_cloud()
+		if shape == None: return None
+
+		dsts = pfe.compute_distances()
+		avg = sum([dst[0] for dst in dsts]) / len(dsts)
+		n_pts = len(dsts)
+
+		labels = []
+		for i in range(n_pts):
+			d = [dst[0] for dst in dsts][i]
+			if d > avg * 2:
+				labels.append('far')
+			elif d > avg:
+				labels.append('medium')
+			elif d > avg / 2:
+				labels.append('close')
+			else:
+				labels.append('on')
+
+		labels = pfe.knn(pts, labels, k);
+		on_i = [i for i, label in enumerate(labels) if label == 'on']
+		on = [pts[i] for i in on_i]
+		close_i = [i for i, label in enumerate(labels) if label == 'close']
+		close = [pts[i] for i in close_i]
+		medium_i = [i for i, label in enumerate(labels) if label == 'medium']
+		medium = [pts[i] for i in medium_i]
+		far_i = [i for i, label in enumerate(labels) if label == 'far']
+		far = [pts[i] for i in far_i]
+
+		doc = App.ActiveDocument
+		matches = doc.addObject('App::Part', 'distance_map')
+		on_pts = Points.Points()
+		close_pts = Points.Points()
+		medium_pts = Points.Points()
+		far_pts = Points.Points()
+		on_pts.addPoints(on)
+		close_pts.addPoints(close)
+		medium_pts.addPoints(medium)
+		far_pts.addPoints(far)
+
+		# TODO mettre dans un part
+		on = doc.addObject("Points::Feature", "on")
+		on.Points = on_pts
+		close = doc.addObject("Points::Feature", "close")
+		close.Points = close_pts
+		medium = doc.addObject("Points::Feature", "medium")
+		medium.Points = medium_pts
+		far = doc.addObject("Points::Feature", "far")
+		far.Points = far_pts
+
+		on.ViewObject.ShapeColor = (0.0, 1.0, 0.0)
+		close.ViewObject.ShapeColor = (0.0, 0.0, 1.00)
+		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
+		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
+
+	def knn(pts, labels, k = 3):
+		print("knn with k =", k)
+		# computes distance between each point, then sort by closest
+		D = distance.squareform(distance.pdist(pts))
+		closest = np.argsort(D, axis=1)
+		kclosest = closest[:, 1:k+1]
+		for p_i in range(len(pts)):
+			neighbour_labels = [labels[i] for i in kclosest[p_i, :]] # get the labels of all nearest neighbours
+			c = Counter(neighbour_labels)
+			true_label = c.most_common(1)[0][0] # get most common label
+			labels[p_i] = true_label
+		return labels
+			
 
 	def feature_matching_bb():
 
