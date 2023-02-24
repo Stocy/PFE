@@ -207,9 +207,7 @@ class pfe:
 			labels[p_i] = true_label
 		return labels
 			
-
 	def feature_matching_bb():
-
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 
@@ -230,7 +228,48 @@ class pfe:
 						else:
 							faceIdx_pts_dict[face_index] = [pts[pt_index]]
 			scale += 0.001
+			
+		doc = App.ActiveDocument
+		matches = doc.addObject('App::Part', 'features_matches')
+		for face_index, f_pts in faceIdx_pts_dict.items():
+			feature_pts = Points.Points()
+			feature_pts.addPoints(f_pts)
+			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
+			fm_pts.adjustRelativeLinks(matches)
+			matches.addObject(fm_pts)
+			fm_pts.Points = feature_pts
+		return faceIdx_pts_dict
 
+	def feature_matching_to_closest_bb():
+		shape, pts = pfe.select_part_cloud()
+		if shape == None: return None
+
+		faceIdx_pts_dict = {}
+		closest_face = {}
+		for face_index in range(len(shape.Faces)):
+			for pt_index in range(len(pts)):
+				bb = shape.Faces[face_index].BoundBox
+				if bb.isInside(pts[pt_index]):
+					if (pt_index in closest_face):
+						closest_face.pop(pt_index)
+					if face_index in faceIdx_pts_dict:
+						if pts[pt_index] not in faceIdx_pts_dict[face_index]:
+							faceIdx_pts_dict[face_index].append(pts[pt_index])
+					else:
+						faceIdx_pts_dict[face_index] = [pts[pt_index]]
+				else:
+					pt = pts[pt_index]
+					dist = (pt - bb.Center).Length
+					if pt_index in closest_face:
+						if dist < closest_face[pt_index][1]:
+							closest_face[pt_index] = (face_index, dist)
+					else:
+						closest_face[pt_index] = (face_index, dist)
+						
+		for pt_index in closest_face:
+			face_id = closest_face[pt_index][0]
+			faceIdx_pts_dict[face_id].append(pts[pt_index])
+			
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
