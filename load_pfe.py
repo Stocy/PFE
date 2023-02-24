@@ -243,13 +243,15 @@ class pfe:
 	def feature_matching_to_closest_bb():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
-
+		
+		pt_matched = [False for p in range(len(pts))]
 		faceIdx_pts_dict = {}
 		closest_face = {}
 		for face_index in range(len(shape.Faces)):
 			for pt_index in range(len(pts)):
 				bb = shape.Faces[face_index].BoundBox
-				if bb.isInside(pts[pt_index]):
+				if bb.isInside(pts[pt_index]) and not pt_matched[pt_index]:
+					pt_matched[pt_index] = True
 					if (pt_index in closest_face):
 						closest_face.pop(pt_index)
 					if face_index in faceIdx_pts_dict:
@@ -268,7 +270,10 @@ class pfe:
 						
 		for pt_index in closest_face:
 			face_id = closest_face[pt_index][0]
-			faceIdx_pts_dict[face_id].append(pts[pt_index])
+			if face_id in faceIdx_pts_dict:
+				faceIdx_pts_dict[face_id].append(pts[pt_index])
+			else:
+				faceIdx_pts_dict[face_id] = [pts[pt_index]]
 			
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
