@@ -71,9 +71,14 @@ class pfe:
 		part = part_obj.Shape
 		return mesh, part
 
+	@staticmethod
 	def compute_distances():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
+		return pfe.icompute_distances(shape, pts)
+
+	@staticmethod
+	def icompute_distances(shape, pts):
 		dsts = []
 		n_pts = len(pts)
 
@@ -88,11 +93,16 @@ class pfe:
 		print(" comp : " + str(n_pts) + " , " + str(end - start))
 		return dsts
 
+	@staticmethod
 	def distance_map():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
+		pfe.idistance_map(shape, pts)
 
-		dsts = pfe.compute_distances()
+	@staticmethod
+	def idistance_map(shape, pts):
+
+		dsts = pfe.icompute_distances(shape, pts)
 		avg = sum([dst[0] for dst in dsts]) / len(dsts)
 		n_pts = len(dsts)
 
