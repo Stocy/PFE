@@ -14,6 +14,8 @@ from scipy.spatial import distance
 from collections import Counter
 from pathlib import Path
 
+from probreg import cpd
+
 class pfe:
 	def load_example():
 		docName = "test"
@@ -24,8 +26,8 @@ class pfe:
 
 		App.newDocument(docName)
 		doc = App.getDocument(docName)
-
-		git_dirpath = "C:/Users/benja/Documents/GitHub/PFE"
+	
+		git_dirpath = "C:/Users/benja/Documents/GitHub/PFE/"
 		print(git_dirpath)
 
 		Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'), docName)
