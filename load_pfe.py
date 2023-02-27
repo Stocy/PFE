@@ -206,7 +206,7 @@ class pfe:
 			labels[p_i] = true_label
 		return labels
 			
-	def feature_matching_bb():
+	def feature_matching_growing_bb():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
 
@@ -228,6 +228,38 @@ class pfe:
 							faceIdx_pts_dict[face_index] = [pts[pt_index]]
 			scale += 0.001
 			
+		doc = App.ActiveDocument
+		matches = doc.addObject('App::Part', 'features_matches')
+		for face_index, f_pts in faceIdx_pts_dict.items():
+			feature_pts = Points.Points()
+			feature_pts.addPoints(f_pts)
+			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
+			fm_pts.adjustRelativeLinks(matches)
+			matches.addObject(fm_pts)
+			fm_pts.Points = feature_pts
+		return faceIdx_pts_dict
+
+	def feature_matching_bb():
+		shape, pts = pfe.select_part_cloud()
+		if shape == None: return None
+
+		pt_matched = [False for p in range(len(pts))]
+		faceIdx_pts_dict = {}
+		scale = 1.0
+		for face_index in range(len(shape.Faces)):
+			for pt_index in range(len(pts)):
+				bb = shape.Faces[face_index].BoundBox
+				if bb.isInside(pts[pt_index]):
+					# and not pt_matched[pt_index]
+					pt_matched[pt_index] = True
+					if face_index in faceIdx_pts_dict:
+						if pts[pt_index] not in faceIdx_pts_dict[face_index]:
+							faceIdx_pts_dict[face_index].append(pts[pt_index])
+					else:
+						faceIdx_pts_dict[face_index] = [pts[pt_index]]
+		not_matched = [pts[i] for i in range(len(pts)) if not pt_matched[i]]
+		faceIdx_pts_dict[-1] = not_matched
+
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
