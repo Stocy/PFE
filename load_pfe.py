@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Macro Begin: /home/tom/.var/app/org.freecadweb.FreeCAD/data/FreeCAD/Macro/load_pfe.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
 # exec macro ctrl f6
 import FreeCAD
@@ -14,6 +12,7 @@ from scipy.spatial import distance
 from collections import Counter
 from pathlib import Path
 
+dir_path = os.path.dirname(os.path.abspath(__file__))
 class pfe:
 	def load_example():
 		docName = "test"
@@ -25,7 +24,7 @@ class pfe:
 		App.newDocument(docName)
 		doc = App.getDocument(docName)
 
-		git_dirpath = "C:/Users/benja/Documents/GitHub/PFE"
+		git_dirpath = dir_path
 		print(git_dirpath)
 
 		Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'), docName)
