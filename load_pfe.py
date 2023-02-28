@@ -12,6 +12,7 @@ from scipy.spatial import distance
 from collections import Counter
 from pathlib import Path
 from probreg import cpd
+import open3d as o3d
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 class pfe:
@@ -429,6 +430,16 @@ class pfe:
 			part_vertex = Part.Vertex(pt.Vector)
 			d = part_vertex.distToShape(part)
 			pt.move(d[1][0][1] - d[1][0][0])
+
+	@staticmethod
+	def cloud_to_numpy(cloud):
+		return np.array(cloud.Points.Points)
+
+	@staticmethod
+	def numpy_to_open3d_cloud(array):
+		pcd = o3d.geometry.PointCloud()
+		pcd.points = o3d.utility.Vector3dVector(array)
+		return pcd
 
 
 '''
