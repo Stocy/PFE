@@ -99,7 +99,6 @@ class pfe:
 		if shape == None: return None
 		pfe.idistance_map(shape, pts)
 
-	@staticmethod
 	def idistance_map(shape, pts):
 
 		dsts = pfe.icompute_distances(shape, pts)
@@ -147,6 +146,7 @@ class pfe:
 		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
 		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 
+	@staticmethod
 	def distance_map_knn(k=3):
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
@@ -215,7 +215,7 @@ class pfe:
 			true_label = c.most_common(1)[0][0] # get most common label
 			labels[p_i] = true_label
 		return labels
-			
+
 	def feature_matching_growing_bb():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
@@ -237,7 +237,7 @@ class pfe:
 						else:
 							faceIdx_pts_dict[face_index] = [pts[pt_index]]
 			scale += 0.001
-			
+
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
@@ -284,7 +284,7 @@ class pfe:
 	def feature_matching_to_closest_bb():
 		shape, pts = pfe.select_part_cloud()
 		if shape == None: return None
-		
+
 		pt_matched = [False for p in range(len(pts))]
 		faceIdx_pts_dict = {}
 		closest_face = {}
@@ -308,14 +308,14 @@ class pfe:
 							closest_face[pt_index] = (face_index, dist)
 					else:
 						closest_face[pt_index] = (face_index, dist)
-						
+
 		for pt_index in closest_face:
 			face_id = closest_face[pt_index][0]
 			if face_id in faceIdx_pts_dict:
 				faceIdx_pts_dict[face_id].append(pts[pt_index])
 			else:
 				faceIdx_pts_dict[face_id] = [pts[pt_index]]
-			
+
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
@@ -413,6 +413,51 @@ class pfe:
 			matches.addObject(fm_pts)
 			fm_pts.Points = feature_pts
 		return faceIdx_pts_dict
+
+	def feature_matching_optimized():
+		shape, pts = pfe.select_part_cloud()
+		if shape == None: return None
+
+		faceIdx_pts_dict = pfe.feature_matching_bb()
+
+		pt_face = [None for i in range(pts)]
+		for face_index in range(len(faceIdx_pts_dict)):
+			f_pts = faceIdx_pts_dict[face_index]
+			if face_index >= 0:
+				face = shape.Faces[face_index]
+				neighbouring_faces = set()
+				face_edges = shape.ancestorsOfType(face, Part.Edge)
+				for edge in face_edges:
+					n_faces = shape.ancestorsOfType(edge, Part.Face)
+					for f in n_faces:
+						neighbouring_faces.add(f)
+				for pt in faceIdx_pts_dict[face_index]:
+					pt_idx = pts.index(pt)
+					neigh_contains = False
+					for nf in neighbouring_faces:
+						if nf != face:
+							nf_index = shape.Faces.index(nf)
+
+							if pt_face[pt_idx] is None:
+								if pt in faceIdx_pts_dict[nf_index]:
+									neigh_contains = True
+									break
+							else:
+								break
+
+					if not neigh_contains:
+						pt_face[pt_idx] = face
+
+				pt_dst = [float("inf") for p in range(len(f_pts))]
+				pt_face = [Part.Face() for p in range(len(f_pts))]
+				for nf in neighbouring_faces:
+					for pt_index in range(len(f_pts)):
+						pt = Part.Vertex(f_pts[pt_index])
+						dst = pt.distToShape(nf)
+						if dst[0] < pt_dst[pt_index]:
+							pt_face[pt_index] = face_index
+							pt_dst[pt_index] = dst[0]
+		# WIP NOT WORKING yet
 
 	# isoler face dans un compound
 	# doc.addObject("Part::Compound","as")
