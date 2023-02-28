@@ -2,18 +2,7 @@ import copy
 import numpy as np
 import open3d as o3
 from probreg import cpd
-"""
-plydata_fix = PlyData.read('fix.ply')
-plydata_mov = PlyData.read('mov.ply')
 
-X_fix = np.array([plydata_fix['vertex']['x'], plydata_fix['vertex']['y'], plydata_fix['vertex']['z']])
-X_mov = np.array([plydata_mov['vertex']['x'], plydata_mov['vertex']['y'], plydata_mov['vertex']['z']])
-X_fix = np.transpose(X_fix)
-X_mov = np.transpose(X_mov)
-
-reg = RigidRegistration(X=X_fix, Y=X_mov)
-result, (s_reg, R_reg, t_reg) = reg.register()
-"""
 print("Reading source point cloud.")
 source = o3.io.read_point_cloud('mov.pcd')
 source.remove_non_finite_points()

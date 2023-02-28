@@ -436,11 +436,40 @@ class pfe:
 		return np.array(cloud.Points.Points)
 
 	@staticmethod
-	def numpy_to_open3d_cloud(array):
+	def numpy_to_o3d_cloud(array):
 		pcd = o3d.geometry.PointCloud()
 		pcd.points = o3d.utility.Vector3dVector(array)
 		return pcd
+	
+	@staticmethod
+	def freecad_to_o3d_cloud(cloud):
+		array = pfe.cloud_to_numpy(cloud)
+		return pfe.numpy_to_o3d_cloud(array)
 
+	@staticmethod
+	def cpd(source, target):
+		source_o3d = pfe.freecad_to_o3d_cloud(source)
+		source_o3d.remove_non_finite_points()
+		target_o3d = pfe.freecad_to_o3d_cloud(target)
+		target_o3d.remove_non_finite_points()
+		print("Computing registration...")
+		tf_param, _, _ = cpd.registration_cpd(source_o3d, target_o3d)
+		print("Finished registration with:\nrotation=", tf_param.rot, "\ntranslation=", tf_param.t,"\nscale=", tf_param.scale);
+		pfe.transform_cloud(source, tf_param)
+	
+	@staticmethod
+	def transform_cloud(cloud, tf):
+		placement = cloud.Placement
+		m = placement.toMatrix()
+		m.scale(tf.scale, tf.scale, tf.scale)
+		rot_mat = FreeCAD.Matrix()
+		rot = np.append(tf.rot, [[0, 0, 0]], 0)
+		rot = np.append(rot, [[0], [0], [0], [1]], 1)
+		rot_mat.A = tuple(rot.flatten().tolist())
+		m.multiply(rot_mat)
+		m.move(FreeCAD.Vector(tf.t))
+		cloud.Placement = 	FreeCAD.Placement(m)
+		
 
 '''
 dsts = []
