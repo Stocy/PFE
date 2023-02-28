@@ -455,18 +455,26 @@ class pfe:
 		print("Computing registration...")
 		tf_param, _, _ = cpd.registration_cpd(source_o3d, target_o3d)
 		print("Finished registration with:\nrotation=", tf_param.rot, "\ntranslation=", tf_param.t,"\nscale=", tf_param.scale);
-		pfe.transform_cloud(source, tf_param)
+		source_o3d.points = tf_param.transform(source_o3d.points)
+		pcl = Points.Points()
+		pcl_points = np.asarray(source_o3d.points).tolist()
+		pcl.addPoints([tuple(x) for x in pcl_points])
+		result = doc.addObject("Points::Feature", "result")
+		result.Points = pcl
+		#pfe.transform_cloud(source, tf_param)
 	
 	@staticmethod
 	def transform_cloud(cloud, tf):
 		placement = cloud.Placement
 		m = placement.toMatrix()
+		"""
 		m.scale(tf.scale, tf.scale, tf.scale)
 		rot_mat = FreeCAD.Matrix()
 		rot = np.append(tf.rot, [[0, 0, 0]], 0)
 		rot = np.append(rot, [[0], [0], [0], [1]], 1)
 		rot_mat.A = tuple(rot.flatten().tolist())
 		m.multiply(rot_mat)
+		"""
 		m.move(FreeCAD.Vector(tf.t))
 		cloud.Placement = 	FreeCAD.Placement(m)
 		
