@@ -11,6 +11,8 @@ import random
 from scipy.spatial import distance
 from collections import Counter
 from pathlib import Path
+from probreg import cpd
+import open3d as o3d
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 class pfe:
@@ -473,6 +475,54 @@ class pfe:
 			part_vertex = Part.Vertex(pt.Vector)
 			d = part_vertex.distToShape(part)
 			pt.move(d[1][0][1] - d[1][0][0])
+
+	@staticmethod
+	def cloud_to_numpy(cloud):
+		return np.array(cloud.Points.Points)
+
+	@staticmethod
+	def numpy_to_o3d_cloud(array):
+		pcd = o3d.geometry.PointCloud()
+		pcd.points = o3d.utility.Vector3dVector(array)
+		return pcd
+	
+	@staticmethod
+	def freecad_to_o3d_cloud(cloud):
+		array = pfe.cloud_to_numpy(cloud)
+		return pfe.numpy_to_o3d_cloud(array)
+
+	@staticmethod
+	def icpd(source, target):
+		source_o3d = pfe.freecad_to_o3d_cloud(source)
+		source_o3d.remove_non_finite_points()
+		target_o3d = pfe.freecad_to_o3d_cloud(target)
+		target_o3d.remove_non_finite_points()
+		print("Computing registration...")
+		tf_param, _, _ = cpd.registration_cpd(source_o3d, target_o3d)
+		print("Finished registration with:\nrotation=", tf_param.rot, "\ntranslation=", tf_param.t,"\nscale=", tf_param.scale);
+		source_o3d.points = tf_param.transform(source_o3d.points)
+		pcl = Points.Points()
+		pcl_points = np.asarray(source_o3d.points).tolist()
+		pcl.addPoints([tuple(x) for x in pcl_points])
+		doc = App.ActiveDocument
+		result = doc.addObject("Points::Feature", "result")
+		result.Points = pcl
+		return pcl
+
+	@staticmethod
+	def cpd():
+		selection = Gui.Selection.getSelection()
+		if len(selection) == 2:
+			if type(selection[0]) is App.GeoFeature and type(selection[1]) is App.GeoFeature:
+				source = selection[0]
+				target = selection[1]
+				return pfe.icpd(source, target)
+			else:
+				print("WRONG ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+				return None
+		else:
+			print("TOO FEW ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+			return None
 
 
 '''
