@@ -447,7 +447,7 @@ class pfe:
 		return pfe.numpy_to_o3d_cloud(array)
 
 	@staticmethod
-	def cpd(source, target):
+	def icpd(source, target):
 		source_o3d = pfe.freecad_to_o3d_cloud(source)
 		source_o3d.remove_non_finite_points()
 		target_o3d = pfe.freecad_to_o3d_cloud(target)
@@ -459,25 +459,26 @@ class pfe:
 		pcl = Points.Points()
 		pcl_points = np.asarray(source_o3d.points).tolist()
 		pcl.addPoints([tuple(x) for x in pcl_points])
+		doc = App.ActiveDocument
 		result = doc.addObject("Points::Feature", "result")
 		result.Points = pcl
-		#pfe.transform_cloud(source, tf_param)
-	
+		return pcl
+
 	@staticmethod
-	def transform_cloud(cloud, tf):
-		placement = cloud.Placement
-		m = placement.toMatrix()
-		"""
-		m.scale(tf.scale, tf.scale, tf.scale)
-		rot_mat = FreeCAD.Matrix()
-		rot = np.append(tf.rot, [[0, 0, 0]], 0)
-		rot = np.append(rot, [[0], [0], [0], [1]], 1)
-		rot_mat.A = tuple(rot.flatten().tolist())
-		m.multiply(rot_mat)
-		"""
-		m.move(FreeCAD.Vector(tf.t))
-		cloud.Placement = 	FreeCAD.Placement(m)
-		
+	def cpd():
+		selection = Gui.Selection.getSelection()
+		if len(selection) == 2:
+			if type(selection[0]) is App.GeoFeature and type(selection[1]) is App.GeoFeature:
+				source = selection[0]
+				target = selection[1]
+				return pfe.icpd(source, target)
+			else:
+				print("WRONG ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+				return None
+		else:
+			print("TOO FEW ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+			return None
+
 
 '''
 dsts = []
