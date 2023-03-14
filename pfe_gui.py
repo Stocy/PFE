@@ -5,6 +5,7 @@ import ImportGui
 import Part
 import os
 import sys
+from PySide import QtGui
 import time
 import numpy as np
 import random
@@ -17,11 +18,12 @@ sys.path.append(str(dir_path))
 
 try:
     del sys.modules['pfe_standalone']
-except AttributeError:
+except:
     pass
 
 from pfe_standalone import *
 class pfe:
+	@staticmethod
 	def load_example():
 		docName = "test"
 		try:
@@ -41,7 +43,42 @@ class pfe:
 		# pts = doc.getObject("nuage_pts_test_cube").Points.Points
 		# cube = doc.getObject("Part__Feature").Shape
 
+	@staticmethod
+	def select_cloud_obj():
+		cloud_obj = Gui.Selection.getSelection()
+		if len(cloud_obj) == 1:
+			if type(cloud_obj[0]) is App.GeoFeature:
+				cloud = cloud_obj[0]
+			else:
+				print("WRONG ARGUMENT should be App.GeoFeature")
+				return None
+		else:
+			print("TOO MANY OR NO ARGUMENTS : ", len(cloud_obj), " should be App.GeoFeature")
+			return None
+		return cloud_obj
 
+	@staticmethod
+	def select_cloud():
+		return pfe.select_cloud_obj().Points
+
+	@staticmethod
+	def select_part_obj():
+		part_obj = Gui.Selection.getSelection()
+		if len(part_obj) == 1:
+			if type(part_obj[0]) is Part.Feature:
+				cloud = part_obj[0]
+			else:
+				print("WRONG ARGUMENT should be Part.Feature")
+				return None
+		else:
+			print("TOO MANY OR NO ARGUMENTS : ", len(part_obj), " should be Part.Feature")
+			return None
+		return part_obj
+
+	@staticmethod
+	def select_part():
+		return pfe.select_part_obj().Shape
+	@staticmethod
 	def select_part_cloud_objs():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
@@ -58,13 +95,15 @@ class pfe:
 			print("TOO FEW OR TOO MUCH ARGUMENTS : ", len(selection), " should be 2 of type App.GeoFeature and Part.Feature")
 			return None, None
 		return part, cloud
+
+	@staticmethod
 	def select_part_cloud():
 		part, cloud = pfe.select_part_cloud_objs()
-		shape = part.Shape
+		part = part.Shape
 		pts = cloud.Points.Points
-		return shape, pts
+		return part, pts
 
-
+	@staticmethod
 	def select_part_mesh_objs():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
@@ -81,6 +120,8 @@ class pfe:
 			print("TOO FEW OR TOO MUCH ARGUMENTS : ", len(selection), " should be Mesh.Feature and Part.Feature")
 			return None, None
 		return part_obj, mesh_obj
+
+	@staticmethod
 	def select_part_mesh():
 		part_obj, mesh_obj = pfe.select_part_mesh_objs()
 		mesh = mesh_obj.Mesh
@@ -147,12 +188,13 @@ class pfe:
 	def distance_map_knn():
 		pfe.distance_map_base(idistance_map_knn)
 
-	def feature_matching_bb():
-		shape, pts = pfe.select_part_cloud()
-		if shape is None or pts is None:
+	@staticmethod
+	def feature_matching_base(ifeature_matching_fct):
+		part, pts = pfe.select_part_cloud()
+		if part is None or pts is None:
 			return None
 
-		faceIdx_pts_dict = ifeature_matching_bb(shape, pts)
+		faceIdx_pts_dict = ifeature_matching_fct(part, pts)
 
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
@@ -166,40 +208,32 @@ class pfe:
 
 		return faceIdx_pts_dict
 
+	@staticmethod
+	def feature_matching_bb():
+		pfe.feature_matching_base(ifeature_matching_bb)
+
+	@staticmethod
 	def feature_matching_growing_bb():
-		shape, pts = pfe.select_part_cloud()
-		if shape is None:
-			return None
+		pfe.feature_matching_base(ifeature_matching_growing_bb)
 
-		faceIdx_pts_dict = ifeature_matching_growing_bb(shape, pts)
-		doc = App.ActiveDocument
-		matches = doc.addObject('App::Part', 'features_matches')
-		for face_index, f_pts in faceIdx_pts_dict.items():
-			feature_pts = Points.Points()
-			feature_pts.addPoints(f_pts)
-			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
-			fm_pts.adjustRelativeLinks(matches)
-			matches.addObject(fm_pts)
-			fm_pts.Points = feature_pts
-		return faceIdx_pts_dict
-
+	@staticmethod
 	def feature_matching_to_closest_bb():
-		part, pts = pfe.select_part_cloud()
-		if part is None or pts is None:
-			return None
+		pfe.feature_matching_base(ifeature_matching_to_closest_bb)
 
-		faceIdx_pts_dict = ifeature_matching_to_closest_bb(part, pts)
-		doc = App.ActiveDocument
-		matches = doc.addObject('App::Part', 'features_matches')
-		for face_index, f_pts in faceIdx_pts_dict.items():
-			feature_pts = Points.Points()
-			feature_pts.addPoints(f_pts)
-			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
-			fm_pts.adjustRelativeLinks(matches)
-			matches.addObject(fm_pts)
-			fm_pts.Points = feature_pts
-		return faceIdx_pts_dict
+	@staticmethod
+	def feature_matching_dst():
+		pfe.feature_matching_base(ifeature_matching_dst)
 
+	@staticmethod
+	def feature_matching_optimized():
+		# WIP NOT WORKING yet
+
+	# isoler face dans un compound
+	# doc.addObject("Part::Compound","as")
+	# ttt = Part.makeCompound(sub)
+	# obj.Shape = ttt
+	# distances
+	@staticmethod
 	def bruitage():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 1:
@@ -212,21 +246,22 @@ class pfe:
 			print("TOO MANY ARGUMENTS should be App.GeoFeature")
 			return
 
-		shp = cloud.Points
+		pts = cloud.Points
 
-		tmp = [0 for x in range(shp.CountPoints)]
-		for i in range(shp.CountPoints):
+		tmp = [0 for x in range(pts.CountPoints)]
+		for i in range(pts.CountPoints):
 			rand = np.array([random.random(), random.random(), random.random()]) * np.sign(cloud.Normal[i]) * 2
 			displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
-			tmp[i] = shp.Points[i] + displacementVector
+			tmp[i] = pts.Points[i] + displacementVector
 		noise = Points.Points()
-		noise.addPoints(shp.Points)
+		noise.addPoints(pts.Points)
 		noise.addPoints(tmp)
 
 		doc = App.ActiveDocument
 		noiseObj = doc.addObject("Points::Feature", "noisyObj")
 		noiseObj.Points = noise
 
+	@staticmethod
 	def bruit_gaussien():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 1:
@@ -252,91 +287,7 @@ class pfe:
 		noiseObj = doc.addObject("Points::Feature", "noisyObj")
 		noiseObj.Points = noise
 
-	def feature_matching_dst():
-		shape, pts = pfe.select_part_cloud()
-		if shape is None: return None
-
-		pt_dst = [float("inf") for p in range(len(pts))]
-		pt_face = [Part.Face() for p in range(len(pts))]
-		faceIdx_pts_dict = {}
-
-		for face_index in range(len(shape.Faces)):
-			for pt_index in range(len(pts)):
-				face = shape.Faces[face_index]
-				pt = Part.Vertex(pts[pt_index])
-				dst = pt.distToShape(face)
-				if dst[0] < pt_dst[pt_index]:
-					pt_face[pt_index] = face_index
-					pt_dst[pt_index] = dst[0]
-
-		for pt_index in range(len(pts)):
-			face_index = pt_face[pt_index]
-			if face_index in faceIdx_pts_dict:
-				faceIdx_pts_dict[face_index].append(pts[pt_index])
-			else:
-				faceIdx_pts_dict[face_index] = [pts[pt_index]]
-
-		doc = App.ActiveDocument
-		matches = doc.addObject('App::Part', 'features_matches')
-		for face_index, f_pts in faceIdx_pts_dict.items():
-			feature_pts = Points.Points()
-			feature_pts.addPoints(f_pts)
-			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
-			fm_pts.adjustRelativeLinks(matches)
-			matches.addObject(fm_pts)
-			fm_pts.Points = feature_pts
-		return faceIdx_pts_dict
-
-	def feature_matching_optimized():
-		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
-
-		faceIdx_pts_dict = pfe.feature_matching_bb()
-
-		pt_face = [None for i in range(pts)]
-		for face_index in range(len(faceIdx_pts_dict)):
-			f_pts = faceIdx_pts_dict[face_index]
-			if face_index >= 0:
-				face = shape.Faces[face_index]
-				neighbouring_faces = set()
-				face_edges = shape.ancestorsOfType(face, Part.Edge)
-				for edge in face_edges:
-					n_faces = shape.ancestorsOfType(edge, Part.Face)
-					for f in n_faces:
-						neighbouring_faces.add(f)
-				for pt in faceIdx_pts_dict[face_index]:
-					pt_idx = pts.index(pt)
-					neigh_contains = False
-					for nf in neighbouring_faces:
-						if nf != face:
-							nf_index = shape.Faces.index(nf)
-
-							if pt_face[pt_idx] is None:
-								if pt in faceIdx_pts_dict[nf_index]:
-									neigh_contains = True
-									break
-							else:
-								break
-
-					if not neigh_contains:
-						pt_face[pt_idx] = face
-
-				pt_dst = [float("inf") for p in range(len(f_pts))]
-				pt_face = [Part.Face() for p in range(len(f_pts))]
-				for nf in neighbouring_faces:
-					for pt_index in range(len(f_pts)):
-						pt = Part.Vertex(f_pts[pt_index])
-						dst = pt.distToShape(nf)
-						if dst[0] < pt_dst[pt_index]:
-							pt_face[pt_index] = face_index
-							pt_dst[pt_index] = dst[0]
-		# WIP NOT WORKING yet
-
-	# isoler face dans un compound
-	# doc.addObject("Part::Compound","as")
-	# ttt = Part.makeCompound(sub)
-	# obj.Shape = ttt
-	# distances
+	@staticmethod
 	def fit_mesh_to_part():
 		mesh, part = pfe.select_part_mesh()
 		if mesh is None: return
@@ -346,45 +297,3 @@ class pfe:
 			part_vertex = Part.Vertex(pt.Vector)
 			d = part_vertex.distToShape(part)
 			pt.move(d[1][0][1] - d[1][0][0])
-
-
-'''
-dsts = []
-n_pts = len(pts)
-
-for i in range(n_pts):
-	pt = Part.Vertex(pts[i])
-	dst = pt.distToShape(cube)
-	dsts.append(dst)
-#	print (dst[0])
-avg = sum([dst[0] for dst in dsts]) / len(dsts)
-print("average distance : ",avg)
-
-out_pts = Points.Points()
-on_pts = Points.Points()
-
-on = []
-out = []
-for i in range(n_pts):
-	if ([dst[2][0][3] for dst in dsts][i] == 'Face'):
-		if ([dst[0] for dst in dsts][i] > avg):
-			out.append(pts[i])
-		else :
-			on.append(pts[i])
-
-# vec 0 [dst[1][0][1] for dst in dsts]
-# vec 1 [dst[1][0][1] for dst in dsts]
-out_pts.addPoints(out)
-on_pts.addPoints(on)
-
-out = doc.addObject("Points::Feature","out")
-on = doc.addObject("Points::Feature","on")
-
-out.Points = out_pts
-on.Points = on_pts
-
-# ptts = doc.addObject("Points::Feature","ptss")
-#pts.ViewObject.ShapeColor = (1.0,1.0,1.0)
-### End command Std_Import
-# Macro End: /home/tom/.var/app/org.freecadweb.FreeCAD/data/FreeCAD/Macro/load_pfe.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
-'''

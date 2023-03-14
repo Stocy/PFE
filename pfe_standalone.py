@@ -179,40 +179,10 @@ def ifeature_matching_to_closest_bb(shape, pts):
 
 	return faceIdx_pts_dict
 
-def bruitage(shp):
-
-	tmp = [0 for x in range(shp.CountPoints)]
-	for i in range(shp.CountPoints):
-		rand = np.array([random.random(), random.random(),
-						 random.random()]) * np.sign(cloud.Normal[i]) * 2
-		displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
-		tmp[i] = shp.Points[i] + displacementVector
-	noise = Points.Points()
-	noise.addPoints(shp.Points)
-	noise.addPoints(tmp)
-
-	doc = App.ActiveDocument
-	noiseObj = doc.addObject("Points::Feature", "noisyObj")
-	noiseObj.Points = noise
 
 
-def bruit_gaussien(shp):
 
-	gaussNoise = np.random.randn(shp.CountPoints, 3)
-	tmp = [0 for x in range(shp.CountPoints)]
-	for i in range(shp.CountPoints):
-		tmp[i] = shp.Points[i] + \
-				 FreeCAD.Vector(gaussNoise[i][0], gaussNoise[i][1], gaussNoise[i][2])
-	noise = Points.Points()
-	noise.addPoints(shp.Points)
-	noise.addPoints(tmp)
-
-	doc = App.ActiveDocument
-	noiseObj = doc.addObject("Points::Feature", "noisyObj")
-	noiseObj.Points = noise
-
-
-def feature_matching_dst(shape, pts):
+def ifeature_matching_dst(shape, pts):
 	if shape is None:
 		return None
 	pt_dst = [float("inf") for p in range(len(pts))]
@@ -235,19 +205,10 @@ def feature_matching_dst(shape, pts):
 		else:
 			faceIdx_pts_dict[face_index] = [pts[pt_index]]
 
-	doc = App.ActiveDocument
-	matches = doc.addObject('App::Part', 'features_matches')
-	for face_index, f_pts in faceIdx_pts_dict.items():
-		feature_pts = Points.Points()
-		feature_pts.addPoints(f_pts)
-		fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
-		fm_pts.adjustRelativeLinks(matches)
-		matches.addObject(fm_pts)
-		fm_pts.Points = feature_pts
 	return faceIdx_pts_dict
 
 
-def feature_matching_optimized(shape, pts):
+def ifeature_matching_optimized(shape, pts):
 	if shape == None:
 		return None
 	faceIdx_pts_dict = pfe.feature_matching_bb()
@@ -297,6 +258,38 @@ def feature_matching_optimized(shape, pts):
 	# obj.Shape = ttt
 	# distances
 
+
+def bruitage(shp):
+
+	tmp = [0 for x in range(shp.CountPoints)]
+	for i in range(shp.CountPoints):
+		rand = np.array([random.random(), random.random(),
+						 random.random()]) * np.sign(cloud.Normal[i]) * 2
+		displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
+		tmp[i] = shp.Points[i] + displacementVector
+	noise = Points.Points()
+	noise.addPoints(shp.Points)
+	noise.addPoints(tmp)
+
+	doc = App.ActiveDocument
+	noiseObj = doc.addObject("Points::Feature", "noisyObj")
+	noiseObj.Points = noise
+
+
+def bruit_gaussien(shp):
+
+	gaussNoise = np.random.randn(shp.CountPoints, 3)
+	tmp = [0 for x in range(shp.CountPoints)]
+	for i in range(shp.CountPoints):
+		tmp[i] = shp.Points[i] + \
+				 FreeCAD.Vector(gaussNoise[i][0], gaussNoise[i][1], gaussNoise[i][2])
+	noise = Points.Points()
+	noise.addPoints(shp.Points)
+	noise.addPoints(tmp)
+
+	doc = App.ActiveDocument
+	noiseObj = doc.addObject("Points::Feature", "noisyObj")
+	noiseObj.Points = noise
 
 def fit_mesh_to_part(mesh, part):
 	if mesh is None:
