@@ -1,10 +1,10 @@
-# Macro Begin: /home/tom/.var/app/org.freecadweb.FreeCAD/data/FreeCAD/Macro/load_pfe.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
 # exec macro ctrl f6
 import FreeCAD
 import Points
 import ImportGui
 import Part
 import os
+import sys
 import time
 import numpy as np
 import random
@@ -13,6 +13,14 @@ from collections import Counter
 from pathlib import Path
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(str(dir_path))
+
+try:
+    del sys.modules['pfe_standalone']
+except AttributeError:
+    pass
+
+from pfe_standalone import *
 class pfe:
 	def load_example():
 		docName = "test"
@@ -30,250 +38,140 @@ class pfe:
 		Points.insert(os.path.join(git_dirpath, 'step_files/nuage_pts_test_cube.ply'), docName)
 		ImportGui.insert(os.path.join(git_dirpath, 'step_files/test_cube.step'), docName)
 
-		pts = doc.getObject("nuage_pts_test_cube").Points.Points
-		cube = doc.getObject("Part__Feature").Shape
+		# pts = doc.getObject("nuage_pts_test_cube").Points.Points
+		# cube = doc.getObject("Part__Feature").Shape
 
-	def select_part_cloud():
+
+	def select_part_cloud_objs():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
 			if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
 				cloud = selection[0]
-				object = selection[1]
+				part = selection[1]
 			elif type(selection[1]) is App.GeoFeature and type(selection[0]) is Part.Feature:
 				cloud = selection[1]
-				object = selection[0]
+				part = selection[0]
 			else:
 				print("WRONG ARGUMENTS should be App.GeoFeature and Part.Feature")
 				return None, None
 		else:
-			print("TOO FEW ARGUMENTS should be App.GeoFeature and Part.Feature")
+			print("TOO FEW OR TOO MUCH ARGUMENTS : ", len(selection), " should be 2 of type App.GeoFeature and Part.Feature")
 			return None, None
-		shape = object.Shape
+		return part, cloud
+	def select_part_cloud():
+		part, cloud = pfe.select_part_cloud_objs()
+		shape = part.Shape
 		pts = cloud.Points.Points
 		return shape, pts
 
-	def select_part_mesh():
+
+	def select_part_mesh_objs():
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
 			if type(selection[0]) is Part.Feature and selection[1].TypeId == 'Mesh::Feature':
 				part_obj = selection[0]
-				object = selection[1]
+				mesh_obj = selection[1]
 			elif type(selection[1]) is Part.Feature and selection[0].TypeId == 'Mesh::Feature':
 				part_obj = selection[1]
-				object = selection[0]
+				mesh_obj = selection[0]
 			else:
 				print("WRONG ARGUMENTS should be Mesh.Feature and Part.Feature")
 				return None, None
 		else:
-			print("TOO FEW ARGUMENTS should be Mesh.Feature and Part.Feature")
+			print("TOO FEW OR TOO MUCH ARGUMENTS : ", len(selection), " should be Mesh.Feature and Part.Feature")
 			return None, None
-		mesh = object.Mesh
+		return part_obj, mesh_obj
+	def select_part_mesh():
+		part_obj, mesh_obj = pfe.select_part_mesh_objs()
+		mesh = mesh_obj.Mesh
 		part = part_obj.Shape
 		return mesh, part
 
 	@staticmethod
 	def compute_distances():
-		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
-		return pfe.icompute_distances(shape, pts)
+		part, pts = pfe.select_part_cloud()
+		if part is None:
+			return None
+
+		return icompute_distances(part, pts)
 
 	@staticmethod
-	def icompute_distances(shape, pts):
-		dsts = []
-		n_pts = len(pts)
+	def distance_map_base(idistance_map_fct):
+		shape_obj, pts_obj = pfe.select_part_cloud_objs()
+		part, pts = pfe.select_part_cloud()
+		if part is None or pts is None:
+			return None
+		on, close, medium, far = idistance_map_fct(part, pts)
 
-		start = time.time()
+		pts_obj.ViewObject.Visibility = False  # hide previous point cloud
+		doc = App.ActiveDocument
 
-		for i in range(n_pts):
-			pt = Part.Vertex(pts[i])
-			dst = pt.distToShape(shape)
-			dsts.append(dst)
+		on_pts = Points.Points()
+		close_pts = Points.Points()
+		medium_pts = Points.Points()
+		far_pts = Points.Points()
+		on_pts.addPoints(on)
+		close_pts.addPoints(close)
+		medium_pts.addPoints(medium)
+		far_pts.addPoints(far)
 
-		end = time.time()
-		print(" comp : " + str(n_pts) + " , " + str(end - start))
-		return dsts
+		dmap = doc.addObject('App::Part', 'distance_map')
+		on = doc.addObject("Points::Feature", "on")
+		on.Points = on_pts
+		on.adjustRelativeLinks(dmap)
+		dmap.addObject(on)
 
+		close = doc.addObject("Points::Feature", "close")
+		close.Points = close_pts
+		close.adjustRelativeLinks(dmap)
+		dmap.addObject(close)
+
+		medium = doc.addObject("Points::Feature", "medium")
+		medium.Points = medium_pts
+		medium.adjustRelativeLinks(dmap)
+		dmap.addObject(medium)
+
+		far = doc.addObject("Points::Feature", "far")
+		far.Points = far_pts
+		far.adjustRelativeLinks(dmap)
+		dmap.addObject(far)
+
+		on.ViewObject.ShapeColor = (0.0, 1.0, 0.0)
+		close.ViewObject.ShapeColor = (0.0, 0.0, 1.00)
+		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
+		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 	@staticmethod
 	def distance_map():
-		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
-		pfe.idistance_map(shape, pts)
-
+		pfe.distance_map_base(idistance_map)
 	@staticmethod
-	def idistance_map(shape, pts):
+	def distance_map_knn():
+		pfe.distance_map_base(idistance_map_knn)
 
-		dsts = pfe.icompute_distances(shape, pts)
-		avg = sum([dst[0] for dst in dsts]) / len(dsts)
-		n_pts = len(dsts)
-		max_tol = shape.getTolerance(1)
-
-		on = []
-		close = []
-		medium = []
-		far = []
-		for i in range(n_pts):
-			d = [dst[0] for dst in dsts][i]
-			if d < max_tol:
-				on.append(pts[i])
-			elif d > avg * 2:
-				far.append(pts[i])
-			elif d > avg:
-				medium.append(pts[i])
-			elif d > avg / 2:
-				close.append(pts[i])
-			else:
-				on.append(pts[i])
-
-		doc = App.ActiveDocument
-		matches = doc.addObject('App::Part', 'distance_map')
-		on_pts = Points.Points()
-		close_pts = Points.Points()
-		medium_pts = Points.Points()
-		far_pts = Points.Points()
-		on_pts.addPoints(on)
-		close_pts.addPoints(close)
-		medium_pts.addPoints(medium)
-		far_pts.addPoints(far)
-
-		# TODO mettre dans un part
-		on = doc.addObject("Points::Feature", "on")
-		on.Points = on_pts
-		close = doc.addObject("Points::Feature", "close")
-		close.Points = close_pts
-		medium = doc.addObject("Points::Feature", "medium")
-		medium.Points = medium_pts
-		far = doc.addObject("Points::Feature", "far")
-		far.Points = far_pts
-
-		on.ViewObject.ShapeColor = (0.0, 1.0, 0.0)
-		close.ViewObject.ShapeColor = (0.0, 0.0, 1.00)
-		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
-		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
-
-	@staticmethod
-	def distance_map_knn(k=3):
+	def feature_matching_bb():
 		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
+		if shape is None or pts is None:
+			return None
 
-		dsts = pfe.compute_distances()
-		avg = sum([dst[0] for dst in dsts]) / len(dsts)
-		n_pts = len(dsts)
-
-		labels = []
-		for i in range(n_pts):
-			d = [dst[0] for dst in dsts][i]
-			if d > avg * 2:
-				labels.append('far')
-			elif d > avg:
-				labels.append('medium')
-			elif d > avg / 2:
-				labels.append('close')
-			else:
-				labels.append('on')
-
-		labels = pfe.knn(pts, labels, k);
-		on_i = [i for i, label in enumerate(labels) if label == 'on']
-		on = [pts[i] for i in on_i]
-		close_i = [i for i, label in enumerate(labels) if label == 'close']
-		close = [pts[i] for i in close_i]
-		medium_i = [i for i, label in enumerate(labels) if label == 'medium']
-		medium = [pts[i] for i in medium_i]
-		far_i = [i for i, label in enumerate(labels) if label == 'far']
-		far = [pts[i] for i in far_i]
-
-		doc = App.ActiveDocument
-		matches = doc.addObject('App::Part', 'distance_map')
-		on_pts = Points.Points()
-		close_pts = Points.Points()
-		medium_pts = Points.Points()
-		far_pts = Points.Points()
-		on_pts.addPoints(on)
-		close_pts.addPoints(close)
-		medium_pts.addPoints(medium)
-		far_pts.addPoints(far)
-
-		# TODO mettre dans un part
-		on = doc.addObject("Points::Feature", "on")
-		on.Points = on_pts
-		close = doc.addObject("Points::Feature", "close")
-		close.Points = close_pts
-		medium = doc.addObject("Points::Feature", "medium")
-		medium.Points = medium_pts
-		far = doc.addObject("Points::Feature", "far")
-		far.Points = far_pts
-
-		on.ViewObject.ShapeColor = (0.0, 1.0, 0.0)
-		close.ViewObject.ShapeColor = (0.0, 0.0, 1.00)
-		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
-		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
-
-	def knn(pts, labels, k = 3):
-		print("knn with k =", k)
-		# computes distance between each point, then sort by closest
-		D = distance.squareform(distance.pdist(pts))
-		closest = np.argsort(D, axis=1)
-		kclosest = closest[:, 1:k+1]
-		for p_i in range(len(pts)):
-			neighbour_labels = [labels[i] for i in kclosest[p_i, :]] # get the labels of all nearest neighbours
-			c = Counter(neighbour_labels)
-			true_label = c.most_common(1)[0][0] # get most common label
-			labels[p_i] = true_label
-		return labels
-
-	def feature_matching_growing_bb():
-		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
-
-		pt_matched = [False for p in range(len(pts))]
-		faceIdx_pts_dict = {}
-		scale = 1.0
-		while False in pt_matched:
-			for face_index in range(len(shape.Faces)):
-				for pt_index in range(len(pts)):
-					bb = shape.Faces[face_index].BoundBox
-					bb.enlarge(scale)
-					if bb.isInside(pts[pt_index]):
-						# and not pt_matched[pt_index]
-						pt_matched[pt_index] = True
-						if face_index in faceIdx_pts_dict:
-							if pts[pt_index] not in faceIdx_pts_dict[face_index]:
-								faceIdx_pts_dict[face_index].append(pts[pt_index])
-						else:
-							faceIdx_pts_dict[face_index] = [pts[pt_index]]
-			scale += 0.001
+		faceIdx_pts_dict = ifeature_matching_bb(shape, pts)
 
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
-		for face_index, f_pts in faceIdx_pts_dict.items():
+		for face_index, points in faceIdx_pts_dict.items():
 			feature_pts = Points.Points()
-			feature_pts.addPoints(f_pts)
+			feature_pts.addPoints(points)
 			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
 			fm_pts.adjustRelativeLinks(matches)
 			matches.addObject(fm_pts)
 			fm_pts.Points = feature_pts
+
 		return faceIdx_pts_dict
 
-	def feature_matching_bb():
+	def feature_matching_growing_bb():
 		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
+		if shape is None:
+			return None
 
-		pt_matched = [False for p in range(len(pts))]
-		faceIdx_pts_dict = {}
-		scale = 1.0
-		for face_index in range(len(shape.Faces)):
-			for pt_index in range(len(pts)):
-				bb = shape.Faces[face_index].BoundBox
-				if bb.isInside(pts[pt_index]):
-					# and not pt_matched[pt_index]
-					pt_matched[pt_index] = True
-					if face_index in faceIdx_pts_dict:
-						if pts[pt_index] not in faceIdx_pts_dict[face_index]:
-							faceIdx_pts_dict[face_index].append(pts[pt_index])
-					else:
-						faceIdx_pts_dict[face_index] = [pts[pt_index]]
-		not_matched = [pts[i] for i in range(len(pts)) if not pt_matched[i]]
-		faceIdx_pts_dict[-1] = not_matched
-
+		faceIdx_pts_dict = ifeature_matching_growing_bb(shape, pts)
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
@@ -286,40 +184,11 @@ class pfe:
 		return faceIdx_pts_dict
 
 	def feature_matching_to_closest_bb():
-		shape, pts = pfe.select_part_cloud()
-		if shape == None: return None
+		part, pts = pfe.select_part_cloud()
+		if part is None or pts is None:
+			return None
 
-		pt_matched = [False for p in range(len(pts))]
-		faceIdx_pts_dict = {}
-		closest_face = {}
-		for face_index in range(len(shape.Faces)):
-			for pt_index in range(len(pts)):
-				bb = shape.Faces[face_index].BoundBox
-				if bb.isInside(pts[pt_index]) and not pt_matched[pt_index]:
-					pt_matched[pt_index] = True
-					if (pt_index in closest_face):
-						closest_face.pop(pt_index)
-					if face_index in faceIdx_pts_dict:
-						if pts[pt_index] not in faceIdx_pts_dict[face_index]:
-							faceIdx_pts_dict[face_index].append(pts[pt_index])
-					else:
-						faceIdx_pts_dict[face_index] = [pts[pt_index]]
-				else:
-					pt = pts[pt_index]
-					dist = (pt - bb.Center).Length
-					if pt_index in closest_face:
-						if dist < closest_face[pt_index][1]:
-							closest_face[pt_index] = (face_index, dist)
-					else:
-						closest_face[pt_index] = (face_index, dist)
-
-		for pt_index in closest_face:
-			face_id = closest_face[pt_index][0]
-			if face_id in faceIdx_pts_dict:
-				faceIdx_pts_dict[face_id].append(pts[pt_index])
-			else:
-				faceIdx_pts_dict[face_id] = [pts[pt_index]]
-
+		faceIdx_pts_dict = ifeature_matching_to_closest_bb(part, pts)
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
 		for face_index, f_pts in faceIdx_pts_dict.items():
