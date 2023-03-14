@@ -267,17 +267,7 @@ class pfe:
 			print("TOO MANY ARGUMENTS should be App.GeoFeature")
 			return
 
-		pts = cloud.Points
-
-		tmp = [0 for x in range(pts.CountPoints)]
-		for i in range(pts.CountPoints):
-			rand = np.array([random.random(), random.random(), random.random()]) * np.sign(cloud.Normal[i]) * 2
-			displacementVector = FreeCAD.Vector(rand[0], rand[1], rand[2])
-			tmp[i] = pts.Points[i] + displacementVector
-		noise = Points.Points()
-		noise.addPoints(pts.Points)
-		noise.addPoints(tmp)
-
+		noise = bruitage(cloud.Points)
 		doc = App.ActiveDocument
 		noiseObj = doc.addObject("Points::Feature", "noisyObj")
 		noiseObj.Points = noise
@@ -295,15 +285,7 @@ class pfe:
 			print("TOO MANY ARGUMENTS should be App.GeoFeature")
 			return
 
-		shp = cloud.Points
-		gaussNoise = np.random.randn(shp.CountPoints, 3)
-		tmp = [0 for x in range(shp.CountPoints)]
-		for i in range(shp.CountPoints):
-			tmp[i] = shp.Points[i] + FreeCAD.Vector(gaussNoise[i][0], gaussNoise[i][1], gaussNoise[i][2])
-		noise = Points.Points()
-		noise.addPoints(shp.Points)
-		noise.addPoints(tmp)
-
+		noise = bruit_gaussien(cloud.Points)
 		doc = App.ActiveDocument
 		noiseObj = doc.addObject("Points::Feature", "noisyObj")
 		noiseObj.Points = noise
