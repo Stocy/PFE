@@ -141,6 +141,19 @@ def ifeature_matching_bb(shape, pts):
 	faceIdx_pts_dict[-1] = not_matched_points
 	return faceIdx_pts_dict
 
+def ifeature_matching_bb_bis(part, pts):
+	if part is None:
+		return None
+
+	pt_index_faces_indexes = [[] for pt in pts]
+	for face_index in range(len(part.Faces)):
+		for pt_index in range(len(pts)):
+			bb = part.Faces[face_index].BoundBox
+			if bb.isInside(pts[pt_index]):
+				pt_index_faces_indexes[pt_index].append(face_index)
+
+	return pt_index_faces_indexes
+
 
 
 def ifeature_matching_to_closest_bb(shape, pts):
@@ -208,49 +221,45 @@ def ifeature_matching_dst(shape, pts):
 	return faceIdx_pts_dict
 
 
-def ifeature_matching_optimized(shape, pts):
-	if shape == None:
+def ifeature_matching_optimized(part, pts):
+	if part == None:
 		return None
-	faceIdx_pts_dict = pfe.feature_matching_bb()
+	face_idx_pts_idx = [[] for i in range(len(part.Faces))]
+	pt_idx_faces_idx = ifeature_matching_bb_bis(part, pts)
+	lost_pts_idx = []
 
-	pt_face = [None for i in range(pts)]
-	for face_index in range(len(faceIdx_pts_dict)):
-		f_pts = faceIdx_pts_dict[face_index]
-		if face_index >= 0:
-			face = shape.Faces[face_index]
-			neighbouring_faces = set()
-			face_edges = shape.ancestorsOfType(face, Part.Edge)
-			for edge in face_edges:
-				n_faces = shape.ancestorsOfType(edge, Part.Face)
-				for f in n_faces:
-					neighbouring_faces.add(f)
-			for pt in faceIdx_pts_dict[face_index]:
-				pt_idx = pts.index(pt)
-				neigh_contains = False
-				for nf in neighbouring_faces:
-					if nf != face:
-						nf_index = shape.Faces.index(nf)
+	pt_dst = [float("inf") for p in range(len(pts))]
+	for pt_idx in range(len(pt_idx_faces_idx)):
+		faces_idx = pt_idx_faces_idx[pt_idx]
+		if len(faces_idx) == 0:
+			# full search
+			lost_pts_idx.append(pt_idx)
+		elif len(faces_idx) == 1:
+			face_idx_pts_idx[faces_idx[0]].append(pt_idx)
+		elif len(faces_idx) > 1:
+			face_dst = float("inf")
+			closest_face_idx = faces_idx[0]
+			for face_idx in faces_idx:
+				face = part.Faces[face_idx]
+				pt = Part.Vertex(pts[pt_idx])
+				dst = pt.distToShape(face)
+				if dst[0] < face_dst:
+					closest_face_idx = face_idx
+					face_dst = dst[0]
+			print("a : ", closest_face_idx)
+			face_idx_pts_idx[closest_face_idx].append(pt_idx)
 
-						if pt_face[pt_idx] is None:
-							if pt in faceIdx_pts_dict[nf_index]:
-								neigh_contains = True
-								break
-						else:
-							break
+	for face_index in range(len(part.Faces)):
+		for pt_index in lost_pts_idx:
+			face = part.Faces[face_index]
+			pt = Part.Vertex(pts[pt_index])
+			dst = pt.distToShape(face)
+			if dst[0] < pt_dst[pt_index]:
+				face_idx_pts_idx[face_index].append(pt_index)
+				pt_dst[pt_index] = dst[0]
 
-				if not neigh_contains:
-					pt_face[pt_idx] = face
+	return face_idx_pts_idx
 
-			pt_dst = [float("inf") for p in range(len(f_pts))]
-			pt_face = [Part.Face() for p in range(len(f_pts))]
-			for nf in neighbouring_faces:
-				for pt_index in range(len(f_pts)):
-					pt = Part.Vertex(f_pts[pt_index])
-					dst = pt.distToShape(nf)
-					if dst[0] < pt_dst[pt_index]:
-						pt_face[pt_index] = face_index
-						pt_dst[pt_index] = dst[0]
-		# WIP NOT WORKING yet
 
 	# isoler face dans un compound
 	# doc.addObject("Part::Compound","as")

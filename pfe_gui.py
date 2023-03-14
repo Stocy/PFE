@@ -209,6 +209,27 @@ class pfe:
 		return faceIdx_pts_dict
 
 	@staticmethod
+	def feature_matching_base_bis(ifeature_matching_fct):
+		part, pts = pfe.select_part_cloud()
+		if part is None or pts is None:
+			return None
+
+		face_idx_pts_idx = ifeature_matching_fct(part, pts)
+
+		doc = App.ActiveDocument
+		matches = doc.addObject('App::Part', 'features_matches')
+		for face_index in range(len(face_idx_pts_idx)):
+			points = [pts[i] for i in face_idx_pts_idx[face_index]]
+			feature_pts = Points.Points()
+			feature_pts.addPoints(points)
+			fm_pts = doc.addObject("Points::Feature", "Face" + str(face_index))
+			fm_pts.adjustRelativeLinks(matches)
+			matches.addObject(fm_pts)
+			fm_pts.Points = feature_pts
+
+		return face_idx_pts_idx
+
+	@staticmethod
 	def feature_matching_bb():
 		pfe.feature_matching_base(ifeature_matching_bb)
 
@@ -226,7 +247,7 @@ class pfe:
 
 	@staticmethod
 	def feature_matching_optimized():
-		# WIP NOT WORKING yet
+		pfe.feature_matching_base_bis(ifeature_matching_optimized)
 
 	# isoler face dans un compound
 	# doc.addObject("Part::Compound","as")
