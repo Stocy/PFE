@@ -123,6 +123,7 @@ def ifeature_matching_growing_bb(shape, pts):
 
 
 def ifeature_matching_bb(shape, pts):
+	start = time.time()
 	if shape is None:
 		return None
 
@@ -141,11 +142,16 @@ def ifeature_matching_bb(shape, pts):
 					faceIdx_pts_dict[face_index] = [pts[pt_index]]
 	not_matched_points = [pts[i] for i in range(len(pts)) if not pt_matched[i]]
 	faceIdx_pts_dict[-1] = not_matched_points
+
+	end = time.time()
+	print("feature_matching_bb on", len(pts), " points : ", str(end - start))
 	return faceIdx_pts_dict
 
 def ifeature_matching_bb_bis(part, pts):
 	if part is None:
 		return None
+
+	start = time.time()
 
 	pt_index_faces_indexes = [[] for pt in pts]
 	for face_index in range(len(part.Faces)):
@@ -153,6 +159,9 @@ def ifeature_matching_bb_bis(part, pts):
 			bb = part.Faces[face_index].BoundBox
 			if bb.isInside(pts[pt_index]):
 				pt_index_faces_indexes[pt_index].append(face_index)
+
+	end = time.time()
+	print("feature_matching_bb_bis on", len(pts), " points : ", str(end - start))
 
 	return pt_index_faces_indexes
 
@@ -200,6 +209,8 @@ def ifeature_matching_to_closest_bb(shape, pts):
 def ifeature_matching_dst(shape, pts):
 	if shape is None:
 		return None
+
+	start = time.time()
 	pt_dst = [float("inf") for p in range(len(pts))]
 	pt_face = [Part.Face() for p in range(len(pts))]
 	faceIdx_pts_dict = {}
@@ -220,12 +231,16 @@ def ifeature_matching_dst(shape, pts):
 		else:
 			faceIdx_pts_dict[face_index] = [pts[pt_index]]
 
+	end = time.time()
+	print("feature_matching_dst on", len(pts), " points : ", str(end - start))
+
 	return faceIdx_pts_dict
 
 
 def ifeature_matching_optimized(part, pts):
 	if part == None:
 		return None
+	start = time.time()
 	face_idx_pts_idx = [[] for i in range(len(part.Faces))]
 	pt_idx_faces_idx = ifeature_matching_bb_bis(part, pts)
 	lost_pts_idx = []
@@ -259,6 +274,9 @@ def ifeature_matching_optimized(part, pts):
 			if dst[0] < pt_dst[pt_index]:
 				face_idx_pts_idx[face_index].append(pt_index)
 				pt_dst[pt_index] = dst[0]
+
+	end = time.time()
+	print("feature_matching_optimized on", len(pts), " points : ", str(end - start))
 
 	return face_idx_pts_idx
 

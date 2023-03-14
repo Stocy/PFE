@@ -6,12 +6,6 @@ import Part
 import os
 import sys
 from PySide import QtGui
-import time
-import numpy as np
-import random
-from scipy.spatial import distance
-from collections import Counter
-from pathlib import Path
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(str(dir_path))
@@ -248,12 +242,6 @@ class pfe:
 	@staticmethod
 	def feature_matching_optimized():
 		pfe.feature_matching_base_bis(ifeature_matching_optimized)
-
-	# isoler face dans un compound
-	# doc.addObject("Part::Compound","as")
-	# ttt = Part.makeCompound(sub)
-	# obj.Shape = ttt
-	# distances
 	@staticmethod
 	def bruitage():
 		selection = Gui.Selection.getSelection()
