@@ -318,3 +318,22 @@ class pfe:
 			part_vertex = Part.Vertex(pt.Vector)
 			d = part_vertex.distToShape(part)
 			pt.move(d[1][0][1] - d[1][0][0])
+
+	@staticmethod
+	def cpd():
+		selection = Gui.Selection.getSelection()
+		if len(selection) == 2:
+			if type(selection[0]) is App.GeoFeature and type(selection[1]) is App.GeoFeature:
+				source = selection[0]
+				target = selection[1]
+				pcl = icpd(source, target)
+			else:
+				print("WRONG ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+				return None
+		else:
+			print("TOO FEW ARGUMENTS should be App.GeoFeature and App.GeoFeature")
+			return None
+
+		doc = App.ActiveDocument
+		result = doc.addObject("Points::Feature", "result")
+		result.Points = pcl

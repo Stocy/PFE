@@ -9,6 +9,8 @@ import random
 from scipy.spatial import distance
 from collections import Counter
 from pathlib import Path
+from probreg import cpd
+import open3d as o3d
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -310,7 +312,31 @@ def fit_mesh_to_part(mesh, part):
 		d = part_vertex.distToShape(part)
 		pt.move(d[1][0][1] - d[1][0][0])
 
+def cloud_to_numpy(cloud):
+	return np.array(cloud.Points.Points)
 
+def numpy_to_o3d_cloud(array):
+	pcd = o3d.geometry.PointCloud()
+	pcd.points = o3d.utility.Vector3dVector(array)
+	return pcd
+
+def freecad_to_o3d_cloud(cloud):
+	array = cloud_to_numpy(cloud)
+	return numpy_to_o3d_cloud(array)
+
+def icpd(source, target):
+	source_o3d = freecad_to_o3d_cloud(source)
+	source_o3d.remove_non_finite_points()
+	target_o3d = freecad_to_o3d_cloud(target)
+	target_o3d.remove_non_finite_points()
+	print("Computing registration...")
+	tf_param, _, _ = cpd.registration_cpd(source_o3d, target_o3d)
+	print("Finished registration with:\nrotation=", tf_param.rot, "\ntranslation=", tf_param.t,"\nscale=", tf_param.scale);
+	source_o3d.points = tf_param.transform(source_o3d.points)
+	pcl = Points.Points()
+	pcl_points = np.asarray(source_o3d.points).tolist()
+	pcl.addPoints([tuple(x) for x in pcl_points])
+	return pcl
 
 '''
 dsts = []
