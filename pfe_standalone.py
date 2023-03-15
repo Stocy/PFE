@@ -1,7 +1,6 @@
 # exec macro ctrl f6
-import FreeCAD
-import Points
-import Part
+import FreeCAD, Mesh, Part, Points
+import MeshPart
 import os
 import time
 import numpy as np
@@ -340,6 +339,14 @@ def icpd(source, target):
 	pcl_points = np.asarray(source_o3d.points).tolist()
 	pcl.addPoints([tuple(x) for x in pcl_points])
 	return pcl
+
+def part_to_mesh(part, max_length=1):
+	shp = Part.getShape(part)
+	return shape_to_mesh(shp, max_length)
+
+def shape_to_mesh(shp, max_length=1):
+	mesh = MeshPart.meshFromShape(shp, MaxLength=max_length)
+	return mesh
 
 '''
 dsts = []

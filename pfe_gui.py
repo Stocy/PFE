@@ -60,14 +60,14 @@ class pfe:
 		part_obj = Gui.Selection.getSelection()
 		if len(part_obj) == 1:
 			if type(part_obj[0]) is Part.Feature:
-				cloud = part_obj[0]
+				part = part_obj[0]
 			else:
 				print("WRONG ARGUMENT should be Part.Feature")
 				return None
 		else:
 			print("TOO MANY OR NO ARGUMENTS : ", len(part_obj), " should be Part.Feature")
 			return None
-		return part_obj
+		return part
 
 	@staticmethod
 	def select_part():
@@ -314,3 +314,11 @@ class pfe:
 		for i in range(len(true_fmatch)):
 			sum += abs(len(true_fmatch[i]) - len(fmatch[i]))
 		print(sum)
+
+	@staticmethod
+	def part_to_mesh(max_length=1):
+		part = pfe.select_part_obj()
+		doc = App.ActiveDocument
+		mesh = doc.addObject("Mesh::Feature", "Mesh")
+		mesh.Mesh = part_to_mesh(part, max_length)
+		mesh.Label = part.Label + "(Mesh)"
