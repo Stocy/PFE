@@ -208,7 +208,7 @@ class pfe:
 		if part is None or pts is None:
 			return None
 
-		face_idx_pts_idx = ifeature_matching_fct(part, pts)
+		face_idx_pts_idx, not_matched_pt_idx = ifeature_matching_fct(part, pts)
 
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
@@ -221,27 +221,27 @@ class pfe:
 			matches.addObject(fm_pts)
 			fm_pts.Points = feature_pts
 
-		return face_idx_pts_idx
+		return face_idx_pts_idx, not_matched_pt_idx
 
 	@staticmethod
 	def feature_matching_bb():
-		pfe.feature_matching_base(ifeature_matching_bb)
+		return pfe.feature_matching_base_bis(ifeature_matching_bb)
 
 	@staticmethod
 	def feature_matching_growing_bb():
-		pfe.feature_matching_base(ifeature_matching_growing_bb)
+		return pfe.feature_matching_base(ifeature_matching_growing_bb)
 
 	@staticmethod
 	def feature_matching_to_closest_bb():
-		pfe.feature_matching_base(ifeature_matching_to_closest_bb)
+		return pfe.feature_matching_base(ifeature_matching_to_closest_bb)
 
 	@staticmethod
 	def feature_matching_dst():
-		pfe.feature_matching_base(ifeature_matching_dst)
+		return pfe.feature_matching_base_bis(ifeature_matching_dst)
 
 	@staticmethod
 	def feature_matching_optimized():
-		pfe.feature_matching_base_bis(ifeature_matching_optimized)
+		return pfe.feature_matching_base_bis(ifeature_matching_optimized)
 	@staticmethod
 	def bruitage():
 		selection = Gui.Selection.getSelection()
@@ -307,3 +307,10 @@ class pfe:
 		doc = App.ActiveDocument
 		result = doc.addObject("Points::Feature", "result")
 		result.Points = pcl
+
+	@staticmethod
+	def cmp_fmap(true_fmatch, fmatch):
+		sum = 0
+		for i in range(len(true_fmatch)):
+			sum += abs(len(true_fmatch[i]) - len(fmatch[i]))
+		print(sum)

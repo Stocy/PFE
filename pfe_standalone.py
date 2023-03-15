@@ -128,24 +128,20 @@ def ifeature_matching_bb(shape, pts):
 		return None
 
 	pt_matched = [False for p in range(len(pts))]
-	faceIdx_pts_dict = {}
+	face_idx_pts_idx = [[] for i in range(len(shape.Faces))]
 	for face_index in range(len(shape.Faces)):
 		for pt_index in range(len(pts)):
 			bb = shape.Faces[face_index].BoundBox
 			if bb.isInside(pts[pt_index]):
 				# and not pt_matched[pt_index]
 				pt_matched[pt_index] = True
-				if face_index in faceIdx_pts_dict:
-					if pts[pt_index] not in faceIdx_pts_dict[face_index]:
-						faceIdx_pts_dict[face_index].append(pts[pt_index])
-				else:
-					faceIdx_pts_dict[face_index] = [pts[pt_index]]
-	not_matched_points = [pts[i] for i in range(len(pts)) if not pt_matched[i]]
-	faceIdx_pts_dict[-1] = not_matched_points
+				face_idx_pts_idx[face_index].append(pt_index)
+
+	not_matched_points = [pt_index for pt_index in range(len(pts)) if not pt_matched[pt_index]]
 
 	end = time.time()
 	print("feature_matching_bb on", len(pts), " points : ", str(end - start))
-	return faceIdx_pts_dict
+	return face_idx_pts_idx, not_matched_points
 
 def ifeature_matching_bb_bis(part, pts):
 	if part is None:
@@ -213,7 +209,7 @@ def ifeature_matching_dst(shape, pts):
 	start = time.time()
 	pt_dst = [float("inf") for p in range(len(pts))]
 	pt_face = [Part.Face() for p in range(len(pts))]
-	faceIdx_pts_dict = {}
+	face_idx_pts_idx = [[] for i in range(len(shape.Faces))]
 
 	for face_index in range(len(shape.Faces)):
 		for pt_index in range(len(pts)):
@@ -226,15 +222,12 @@ def ifeature_matching_dst(shape, pts):
 
 	for pt_index in range(len(pts)):
 		face_index = pt_face[pt_index]
-		if face_index in faceIdx_pts_dict:
-			faceIdx_pts_dict[face_index].append(pts[pt_index])
-		else:
-			faceIdx_pts_dict[face_index] = [pts[pt_index]]
+		face_idx_pts_idx[face_index].append(pt_index)
 
 	end = time.time()
 	print("feature_matching_dst on", len(pts), " points : ", str(end - start))
 
-	return faceIdx_pts_dict
+	return face_idx_pts_idx, []
 
 
 def ifeature_matching_optimized(part, pts):
@@ -263,7 +256,7 @@ def ifeature_matching_optimized(part, pts):
 				if dst[0] < face_dst:
 					closest_face_idx = face_idx
 					face_dst = dst[0]
-			print("a : ", closest_face_idx)
+			# print("a : ", closest_face_idx)
 			face_idx_pts_idx[closest_face_idx].append(pt_idx)
 
 	for face_index in range(len(part.Faces)):
@@ -278,7 +271,7 @@ def ifeature_matching_optimized(part, pts):
 	end = time.time()
 	print("feature_matching_optimized on", len(pts), " points : ", str(end - start))
 
-	return face_idx_pts_idx
+	return face_idx_pts_idx, []
 
 
 	# isoler face dans un compound
