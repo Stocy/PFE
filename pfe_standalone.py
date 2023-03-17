@@ -315,11 +315,13 @@ def fit_mesh_to_part(mesh, part):
 		pt.move(d[1][0][1] - d[1][0][0])
 
 def cloud_to_numpy(cloud):
-	return np.array(cloud.Points.Points)
+	return np.array([cloud.Points.Points, cloud.Normal])
 
 def numpy_to_o3d_cloud(array):
 	pcd = o3d.geometry.PointCloud()
-	pcd.points = o3d.utility.Vector3dVector(array)
+	pcd.points = o3d.utility.Vector3dVector(array[0])
+	if (len(array == 2)):
+		pcd.normals = o3d.utility.Vector3dVector(array[1])
 	return pcd
 
 def freecad_to_o3d_cloud(cloud):
@@ -347,6 +349,33 @@ def part_to_mesh(part, max_length=1):
 def shape_to_mesh(shp, max_length=1):
 	mesh = MeshPart.meshFromShape(shp, MaxLength=max_length)
 	return mesh
+
+def cloud_to_mesh(cloud, depth=9):
+	cloud = freecad_to_o3d_cloud(cloud)
+	o3d_mesh, _ =  o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(cloud, depth=depth)
+	o3d_mesh.remove_degenerate_triangles()
+	o3d_mesh.remove_duplicated_triangles()
+	o3d_mesh.remove_non_manifold_edges()
+	return o3d_to_freecad_mesh(o3d_mesh)
+
+def o3d_to_freecad_mesh(o3d_mesh):
+	mesh = Mesh.Mesh()
+	triangles = np.asarray(o3d_mesh.triangles)
+	vertices = np.asarray(o3d_mesh.vertices)
+	facets = []
+	
+	for tri_ind in triangles:
+		tri = [vertices[tri_ind[0]], vertices[tri_ind[1]], vertices[tri_ind[2]]]
+		facets.append([FreeCAD.Vector(tri[0]), FreeCAD.Vector(tri[1]), FreeCAD.Vector(tri[2])])
+	mesh.addFacets(facets)
+	return mesh
+
+#	for tri_ind in triangles:
+#		tri = np.array([vertices[tri_ind[0]], vertices[tri_ind[1]], vertices[tri_ind[2]]])
+#		vec = [FreeCAD.Vector(tri[0]), FreeCAD.Vector(tri[1]), FreeCAD.Vector(tri[2])]
+#		mesh.addFacet(vec[0], vec[1], vec[2])
+#	return mesh
+		
 
 '''
 dsts = []

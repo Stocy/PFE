@@ -49,7 +49,7 @@ class pfe:
 		else:
 			print("TOO MANY OR NO ARGUMENTS : ", len(cloud_obj), " should be App.GeoFeature")
 			return None
-		return cloud_obj
+		return cloud
 
 	@staticmethod
 	def select_cloud():
@@ -322,3 +322,12 @@ class pfe:
 		mesh = doc.addObject("Mesh::Feature", "Mesh")
 		mesh.Mesh = part_to_mesh(part, max_length)
 		mesh.Label = part.Label + "(Mesh)"
+	
+	@staticmethod
+	def cloud_to_mesh(depth=9):
+		cloud = pfe.select_cloud_obj()
+		mesh = cloud_to_mesh(cloud)
+		doc = App.ActiveDocument
+		result = doc.addObject("Mesh::Feature", "Mesh")
+		result.Mesh = mesh
+		result.Label = cloud.Label + "(Mesh)"
