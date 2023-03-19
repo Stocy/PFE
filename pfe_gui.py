@@ -207,12 +207,12 @@ class pfe:
 		return faceIdx_pts_dict
 
 	@staticmethod
-	def feature_matching_base_bis(ifeature_matching_fct):
+	def feature_matching_base_bis(ifeature_matching_fct, tolerance):
 		part, pts = pfe.select_part_cloud()
 		if part is None or pts is None:
 			return None
 
-		face_idx_pts_idx, not_matched_pt_idx = ifeature_matching_fct(part, pts)
+		face_idx_pts_idx, not_matched_pt_idx = ifeature_matching_fct(part, pts, tolerance)
 
 		doc = App.ActiveDocument
 		matches = doc.addObject('App::Part', 'features_matches')
@@ -228,8 +228,8 @@ class pfe:
 		return face_idx_pts_idx, not_matched_pt_idx
 
 	@staticmethod
-	def feature_matching_bb():
-		return pfe.feature_matching_base_bis(ifeature_matching_bb)
+	def feature_matching_bb(tolerance=1.0):
+		return pfe.feature_matching_base_bis(ifeature_matching_bb, tolerance)
 
 	@staticmethod
 	def feature_matching_growing_bb():
@@ -240,12 +240,13 @@ class pfe:
 		return pfe.feature_matching_base(ifeature_matching_to_closest_bb)
 
 	@staticmethod
-	def feature_matching_dst():
-		return pfe.feature_matching_base_bis(ifeature_matching_dst)
+	def feature_matching_dst(tolerance=1.0):
+		return pfe.feature_matching_base_bis(ifeature_matching_dst, tolerance)
 
 	@staticmethod
-	def feature_matching_optimized():
-		return pfe.feature_matching_base_bis(ifeature_matching_optimized)
+	def feature_matching_optimized(tolerance=1.0):
+		return pfe.feature_matching_base_bis(ifeature_matching_optimized, tolerance)
+
 	@staticmethod
 	def bruitage():
 		selection = Gui.Selection.getSelection()

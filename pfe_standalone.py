@@ -155,7 +155,7 @@ def ifeature_matching_growing_bb(shape, pts):
 	return faceIdx_pts_dict
 
 
-def ifeature_matching_bb(shape, pts):
+def ifeature_matching_bb(shape, pts, tolerance):
 	start = time.time()
 	if shape is None:
 		return None
@@ -163,8 +163,11 @@ def ifeature_matching_bb(shape, pts):
 	pt_matched = [False for p in range(len(pts))]
 	face_idx_pts_idx = [[] for i in range(len(shape.Faces))]
 	for face_index in range(len(shape.Faces)):
+		bb = shape.Faces[face_index].BoundBox
+		if tolerance > 0.0:
+			enlarge_factor = (bb.DiagonalLength + 2 * tolerance) / bb.DiagonalLength
+			bb.enlarge(enlarge_factor)
 		for pt_index in range(len(pts)):
-			bb = shape.Faces[face_index].BoundBox
 			if bb.isInside(pts[pt_index]):
 				# and not pt_matched[pt_index]
 				pt_matched[pt_index] = True
@@ -176,7 +179,7 @@ def ifeature_matching_bb(shape, pts):
 	print("feature_matching_bb on", len(pts), " points : ", str(end - start))
 	return face_idx_pts_idx, not_matched_points
 
-def ifeature_matching_bb_bis(part, pts):
+def ifeature_matching_bb_bis(part, pts, tolerance):
 	if part is None:
 		return None
 
@@ -184,8 +187,11 @@ def ifeature_matching_bb_bis(part, pts):
 
 	pt_index_faces_indexes = [[] for pt in pts]
 	for face_index in range(len(part.Faces)):
+		bb = part.Faces[face_index].BoundBox
+		if tolerance > 0.0:
+			enlarge_factor = (bb.DiagonalLength + 2 * tolerance) / bb.DiagonalLength
+			bb.enlarge(enlarge_factor)
 		for pt_index in range(len(pts)):
-			bb = part.Faces[face_index].BoundBox
 			if bb.isInside(pts[pt_index]):
 				pt_index_faces_indexes[pt_index].append(face_index)
 
@@ -263,12 +269,12 @@ def ifeature_matching_dst(shape, pts):
 	return face_idx_pts_idx, []
 
 
-def ifeature_matching_optimized(part, pts):
+def ifeature_matching_optimized(part, pts, tolerance):
 	if part == None:
 		return None
 	start = time.time()
 	face_idx_pts_idx = [[] for i in range(len(part.Faces))]
-	pt_idx_faces_idx = ifeature_matching_bb_bis(part, pts)
+	pt_idx_faces_idx = ifeature_matching_bb_bis(part, pts, tolerance)
 	lost_pts_idx = []
 
 	pt_dst = [float("inf") for p in range(len(pts))]
