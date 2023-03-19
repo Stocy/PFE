@@ -176,8 +176,12 @@ class pfe:
 		medium.ViewObject.ShapeColor = (1.0, 1.0, 0.15)
 		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 	@staticmethod
-	def distance_map():
-		pfe.distance_map_base(idistance_map)
+	def distance_map_avg():
+		pfe.distance_map_base(idistance_map_avg)
+
+	@staticmethod
+	def distance_map_mediane():
+		pfe.distance_map_base(idistance_map_mediane)
 	@staticmethod
 	def distance_map_knn():
 		pfe.distance_map_base(idistance_map_knn)

@@ -1,6 +1,7 @@
 # exec macro ctrl f6
 import FreeCAD, Mesh, Part, Points
 import MeshPart
+import math
 import os
 import time
 import numpy as np
@@ -27,7 +28,7 @@ def icompute_distances(shape, pts):
 	# end = time.time()
 	# print(" comp : " + str(n_pts) + " , " + str(end - start))
 	return dsts
-def idistance_map(shape, pts):
+def idistance_map_avg(shape, pts):
 	dsts = icompute_distances(shape, pts)
 	avg = sum([dst[0] for dst in dsts]) / len(dsts)
 	n_pts = len(dsts)
@@ -52,7 +53,40 @@ def idistance_map(shape, pts):
 
 	return on, close, medium, far
 
-def idistance_map_knn(shape, pts, k=3):
+def idistance_map_mediane(shape, pts):
+	dsts = icompute_distances(shape, pts)
+	sorted_dsts = [dst[0] for dst in dsts]
+	sorted_dsts.sort()
+	max_dst = max(sorted_dsts)
+	mediane = sorted_dsts[len(sorted_dsts)//2]
+	q1 = sorted_dsts[len(sorted_dsts)//4]
+	q3 = sorted_dsts[3*len(sorted_dsts) // 4]
+	n_pts = len(dsts)
+	max_tol = shape.getTolerance(1)
+
+	on = []
+	close = []
+	medium = []
+	far = []
+	for i in range(n_pts):
+		d = [dst[0] for dst in dsts][i]
+		if d < max_tol:
+			on.append(pts[i])
+		elif d > q3:
+			far.append(pts[i])
+		elif d > mediane:
+			medium.append(pts[i])
+		elif d > q1:
+			close.append(pts[i])
+		else:
+			on.append(pts[i])
+
+	return on, close, medium, far
+
+def idistance_map_knn(shape, pts):
+	k = math.floor(math.sqrt(len(pts)))
+	return idistance_map_knn(shape, pts, k)
+def idistance_map_knn(shape, pts, k):
 	if shape is None or pts is None:
 		return None
 	dsts = icompute_distances(shape, pts)
@@ -83,7 +117,7 @@ def idistance_map_knn(shape, pts, k=3):
 
 	return on, close, medium, far
 
-def knn(pts, labels, k= 3):
+def knn(pts, labels, k):
 	print("knn with k =", k)
 	# computes distance between each point, then sort by closest
 	D = distance.squareform(distance.pdist(pts))
