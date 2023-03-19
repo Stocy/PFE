@@ -293,16 +293,21 @@ def bruitage(shp):
 	return noise
 
 
-def bruit_gaussien(shp):
-	gaussNoise = np.random.randn(shp.CountPoints, 3)
-	tmp = [0 for x in range(shp.CountPoints)]
-	for i in range(shp.CountPoints):
-		tmp[i] = shp.Points[i] + \
+def bruit_gaussien(cloud):
+	gaussNoise = np.random.randn(cloud.Points.CountPoints, 3)
+	tmp = [0 for x in range(cloud.Points.CountPoints)]
+	tmp_normals = [0 for x in range(len(cloud.Normal))]
+	for i in range(cloud.Points.CountPoints):
+		tmp[i] = cloud.Points.Points[i] + \
 				 FreeCAD.Vector(gaussNoise[i][0], gaussNoise[i][1], gaussNoise[i][2])
+		tmp_normals[i] = cloud.Normal[i]
 	noise = Points.Points()
-	noise.addPoints(shp.Points)
+	normals = []
+	noise.addPoints(cloud.Points.Points)
 	noise.addPoints(tmp)
-	return noise
+	normals.extend(cloud.Normal)
+	normals.extend(tmp_normals)
+	return noise, normals
 
 def fit_mesh_to_part(mesh, part):
 	if mesh is None:

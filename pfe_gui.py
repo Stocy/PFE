@@ -273,10 +273,12 @@ class pfe:
 			print("TOO MANY ARGUMENTS should be App.GeoFeature")
 			return
 
-		noise = bruit_gaussien(cloud.Points)
+		noise, normals = bruit_gaussien(cloud)
 		doc = App.ActiveDocument
 		noiseObj = doc.addObject("Points::Feature", "noisyObj")
 		noiseObj.Points = noise
+		noiseObj.addProperty("App::PropertyVectorList", "Normal")
+		noiseObj.Normal = normals
 
 	@staticmethod
 	def fit_mesh_to_part():
