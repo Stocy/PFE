@@ -4,11 +4,9 @@
 
 Avoir installer FreeCad > 20.x
 Installer les dependances python : 
-```
-pip install probreg
-pip install numpy
-pip install scipy
 
+```
+pip install -r requirements.txt
 ```
 
 Pré-requis dans FreeCad :
