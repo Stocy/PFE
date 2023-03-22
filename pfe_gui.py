@@ -268,6 +268,7 @@ class pfe:
 
 	@staticmethod
 	def bruitage():
+		"""Generates noise by cloning and displacing points on a cloud. Prefer using bruit_gaussien() instead"""
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 1:
 			if type(selection[0]) is App.GeoFeature:
@@ -286,6 +287,7 @@ class pfe:
 
 	@staticmethod
 	def bruit_gaussien():
+		"""Generates gaussian noise in a point cloud"""
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 1:
 			if type(selection[0]) is App.GeoFeature:
@@ -306,6 +308,7 @@ class pfe:
 
 	@staticmethod
 	def fit_mesh_to_part():
+		"""Modify Mesh geometry to fit the selected Part"""
 		mesh, part = pfe.select_part_mesh()
 		if mesh is None: return
 		n_pts = len(mesh.Points)
@@ -317,6 +320,7 @@ class pfe:
 
 	@staticmethod
 	def cpd():
+		"""Compute point cloud registration of two point clouds using Coherent Point Drift algorithm. First selected cloud is the source cloud, second is target"""
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
 			if type(selection[0]) is App.GeoFeature and type(selection[1]) is App.GeoFeature:
@@ -343,6 +347,7 @@ class pfe:
 
 	@staticmethod
 	def part_to_mesh(max_length=1):
+		"""Converts a Part object to a Mesh"""
 		part = pfe.select_part_obj()
 		doc = App.ActiveDocument
 		mesh = doc.addObject("Mesh::Feature", "Mesh")
@@ -351,6 +356,7 @@ class pfe:
 	
 	@staticmethod
 	def cloud_to_mesh(depth=9):
+		"""Converts a Point Cloud to a Mesh"""
 		cloud = pfe.select_cloud_obj()
 		mesh = cloud_to_mesh(cloud)
 		doc = App.ActiveDocument
