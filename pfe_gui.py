@@ -187,6 +187,16 @@ class pfe:
 		pfe.distance_map_base(idistance_map_knn)
 
 	@staticmethod
+	def stat_outlier_removal():
+		cloud_obj = pfe.select_cloud_obj()
+		clean_cloud = istat_outlier_removal(cloud_obj)
+
+		doc = App.ActiveDocument
+		clean_cloud_obj = doc.addObject("Points::Feature", "cleaned_cloud")
+		clean_cloud_obj.Points = clean_cloud
+
+
+	@staticmethod
 	def feature_matching_base(ifeature_matching_fct):
 		part, pts = pfe.select_part_cloud()
 		if part is None or pts is None:

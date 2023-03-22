@@ -117,6 +117,14 @@ def idistance_map_knn(shape, pts, k):
 
 	return on, close, medium, far
 
+def istat_outlier_removal(cloud):
+	print("Statistical oulier removal")
+	o3d_cloud = freecad_to_o3d_cloud(cloud)
+	o3d_cloud.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+	res = o3d_to_freecad_cloud(o3d_cloud)
+	return res
+
+
 def knn(pts, labels, k):
 	print("knn with k =", k)
 	# computes distance between each point, then sort by closest
@@ -360,7 +368,10 @@ def fit_mesh_to_part(mesh, part):
 		pt.move(d[1][0][1] - d[1][0][0])
 
 def cloud_to_numpy(cloud):
-	return np.array([cloud.Points.Points, cloud.Normal])
+	if hasattr(cloud, 'Normal'):
+		return np.array([cloud.Points.Points, cloud.Normal])
+	else:
+		return np.array([cloud.Points.Points])
 
 def numpy_to_o3d_cloud(array):
 	pcd = o3d.geometry.PointCloud()
@@ -372,6 +383,12 @@ def numpy_to_o3d_cloud(array):
 def freecad_to_o3d_cloud(cloud):
 	array = cloud_to_numpy(cloud)
 	return numpy_to_o3d_cloud(array)
+
+def o3d_to_freecad_cloud(cloud):
+	res = Points.Points()
+	cloud_points = np.asarray(cloud.points).tolist()
+	res.addPoints([tuple(x) for x in cloud_points])
+	return res
 
 def icpd(source, target):
 	source_o3d = freecad_to_o3d_cloud(source)
