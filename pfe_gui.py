@@ -19,6 +19,7 @@ from pfe_standalone import *
 class pfe:
 	@staticmethod
 	def load_example():
+		"""Load a predefined example step file and cloud"""
 		docName = "test"
 		try:
 			App.closeDocument(docName)
@@ -39,6 +40,7 @@ class pfe:
 
 	@staticmethod
 	def select_cloud_obj():
+		"""Return the selected cloud gui object if one is selected, None otherwise"""
 		cloud_obj = Gui.Selection.getSelection()
 		if len(cloud_obj) == 1:
 			if type(cloud_obj[0]) is App.GeoFeature:
@@ -53,10 +55,12 @@ class pfe:
 
 	@staticmethod
 	def select_cloud():
+		"""Return the selected cloud object if one is selected, None otherwise"""
 		return pfe.select_cloud_obj().Points
 
 	@staticmethod
 	def select_part_obj():
+		"""Return the selected Part gui object if one is selected, None otherwise"""
 		part_obj = Gui.Selection.getSelection()
 		if len(part_obj) == 1:
 			if type(part_obj[0]) is Part.Feature:
@@ -71,9 +75,11 @@ class pfe:
 
 	@staticmethod
 	def select_part():
+		"""Return the selected Part object if one is selected, None otherwise"""
 		return pfe.select_part_obj().Shape
 	@staticmethod
 	def select_part_cloud_objs():
+		"""Return the selected Cloud and Part guis objects if both are selected, None tuple otherwise"""
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
 			if type(selection[0]) is App.GeoFeature and type(selection[1]) is Part.Feature:
@@ -92,6 +98,7 @@ class pfe:
 
 	@staticmethod
 	def select_part_cloud():
+		"""Return the selected Cloud and Part objects if both are selected, None tuple otherwise"""
 		part, cloud = pfe.select_part_cloud_objs()
 		part = part.Shape
 		pts = cloud.Points.Points
@@ -99,6 +106,7 @@ class pfe:
 
 	@staticmethod
 	def select_part_mesh_objs():
+		"""Return the selected Part and Mesh guis objects if both are selected, None tuple otherwise"""
 		selection = Gui.Selection.getSelection()
 		if len(selection) == 2:
 			if type(selection[0]) is Part.Feature and selection[1].TypeId == 'Mesh::Feature':
@@ -117,6 +125,7 @@ class pfe:
 
 	@staticmethod
 	def select_part_mesh():
+		"""Return the selected Mesh gui object if one is selected, None otherwise"""
 		part_obj, mesh_obj = pfe.select_part_mesh_objs()
 		mesh = mesh_obj.Mesh
 		part = part_obj.Shape
