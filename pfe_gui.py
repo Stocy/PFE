@@ -133,6 +133,7 @@ class pfe:
 
 	@staticmethod
 	def compute_distances():
+		"""Compute and return the distances between selected part and a point cloud"""
 		part, pts = pfe.select_part_cloud()
 		if part is None:
 			return None
@@ -141,6 +142,8 @@ class pfe:
 
 	@staticmethod
 	def distance_map_base(idistance_map_fct):
+		"""Distance map base gui implementation
+			Needs a distance map function to work ..."""
 		shape_obj, pts_obj = pfe.select_part_cloud_objs()
 		part, pts = pfe.select_part_cloud()
 		if part is None or pts is None:
@@ -186,10 +189,20 @@ class pfe:
 		far.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
 	@staticmethod
 	def distance_map_avg():
+		"""Compute the distance map based on the average distance and add 4 point clouds:
+			on : distance < avg / 2
+			close : distance < avg
+			medium : distance < 2*avg
+			far : distance > 2*avg """
 		pfe.distance_map_base(idistance_map_avg)
 
 	@staticmethod
 	def distance_map_mediane():
+		"""Compute the distance map based on the median distance and add 4 point clouds:
+			on : distance < q1
+			close : distance < median
+			medium : distance < q3
+			far : distance > q3 """
 		pfe.distance_map_base(idistance_map_mediane)
 	@staticmethod
 	def distance_map_knn():
@@ -207,6 +220,8 @@ class pfe:
 
 	@staticmethod
 	def feature_matching_base(ifeature_matching_fct):
+		"""Feature matching base  gui implementation
+			Needs a feature matching function to work ..."""
 		part, pts = pfe.select_part_cloud()
 		if part is None or pts is None:
 			return None
@@ -227,6 +242,8 @@ class pfe:
 
 	@staticmethod
 	def feature_matching_base_bis(ifeature_matching_fct, tolerance):
+		"""Feature matching base  gui implementation
+			Needs a feature matching function to work ..."""
 		part, pts = pfe.select_part_cloud()
 		if part is None or pts is None:
 			return None

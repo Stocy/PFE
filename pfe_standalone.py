@@ -86,7 +86,9 @@ def idistance_map_mediane(shape, pts):
 def idistance_map_knn(shape, pts):
 	k = math.floor(math.sqrt(len(pts)))
 	return idistance_map_knn(shape, pts, k)
-def idistance_map_knn(shape, pts, k):
+def idistance_map_knn(shape, pts, k = 0):
+	if k == 0:
+		k = math.floor(math.sqrt(len(pts)))
 	if shape is None or pts is None:
 		return None
 	dsts = icompute_distances(shape, pts)
@@ -249,7 +251,7 @@ def ifeature_matching_to_closest_bb(shape, pts):
 
 
 
-def ifeature_matching_dst(shape, pts):
+def ifeature_matching_dst(shape, pts, tolerance = 0):
 	if shape is None:
 		return None
 
