@@ -40,3 +40,10 @@ Celle-cis n'ont pas besoin de la Gui de FreeCad et utilise FreeCad comme une lib
 
 - Feature Map : plusieurs versions plus ou moins rapide et/ou précise/exact
 
+- Recalage de nuage de points avec CPD
+
+- Bruit gaussien et generation de nuage
+
+- Conversions vers format Open3D
+
+
