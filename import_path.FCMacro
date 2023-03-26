@@ -1,4 +1,0 @@
-import sys
-paths = ['C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\python310.zip', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\DLLs', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\lib', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\win32', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\win32\\lib', 'C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\Pythonwin']
-for p in paths:
-	sys.path.append(p)
